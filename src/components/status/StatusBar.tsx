@@ -6,7 +6,7 @@ import { Tooltip } from "@/components/common/Tooltip";
 
 export function StatusBar() {
   const { viewMode } = useUIStore();
-  const { document } = useDocumentStore();
+  const { document, parsedDocument, isParsing } = useDocumentStore();
 
   const formattedMode = viewMode.charAt(0).toUpperCase() + viewMode.slice(1);
 
@@ -43,14 +43,28 @@ export function StatusBar() {
           </>
         )}
 
-        {/* Statistics placeholders clearly distinguishing unavailable data */}
-        <div className="hidden sm:flex items-center gap-2 text-[var(--fluent-text-tertiary)]">
-          <span>— words</span>
-          <span>·</span>
-          <span>— characters</span>
-          <span>·</span>
-          <span>— min read</span>
-        </div>
+        {/* Live parsed statistics or loading/empty state */}
+        {parsedDocument ? (
+          <div className="hidden sm:flex items-center gap-2 text-[var(--fluent-text-secondary)]">
+            <span>{parsedDocument.metadata.wordCount.toLocaleString()} words</span>
+            <span>·</span>
+            <span>{parsedDocument.metadata.characterCount.toLocaleString()} chars</span>
+            <span>·</span>
+            <span>~{parsedDocument.metadata.readingTimeMinutes} min read</span>
+          </div>
+        ) : isParsing ? (
+          <div className="hidden sm:flex items-center gap-2 text-[var(--fluent-accent)] italic animate-pulse">
+            <span>Parsing document AST...</span>
+          </div>
+        ) : (
+          <div className="hidden sm:flex items-center gap-2 text-[var(--fluent-text-tertiary)]">
+            <span>— words</span>
+            <span>·</span>
+            <span>— characters</span>
+            <span>·</span>
+            <span>— min read</span>
+          </div>
+        )}
 
         <div className="h-3 w-[1px] bg-[var(--fluent-border-divider)] hidden sm:block" />
 

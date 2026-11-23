@@ -103,7 +103,7 @@ Rules:
 ## 8. Documentation and Changelog
 
 Maintain `update_details.md`:
-- After every completed task, bug fix, optimization, architecture change, or feature, append an entry at the end.
+- After every completed task, bug fix, optimization, architecture change, or feature, append an entry at the end. it should be properly marked down.
 - Do not rewrite the whole file for routine updates.
 - Include date and time.
 - Use:

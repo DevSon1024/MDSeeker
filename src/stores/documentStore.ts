@@ -1,11 +1,16 @@
 import { create } from "zustand";
 import { FileErrorResponse, LoadedDocument } from "@/types/document";
+import { MarkdownDocument, ParseError } from "@/types/markdown";
 import { openMarkdownFileDialog, readMarkdownFile } from "@/services/documentService";
+import { parseMarkdown } from "@/services/markdownService";
 
 export interface DocumentState {
   document: LoadedDocument | null;
+  parsedDocument: MarkdownDocument | null;
   isLoading: boolean;
+  isParsing: boolean;
   error: FileErrorResponse | null;
+  parseError: ParseError | null;
   isDraggingOver: boolean;
   currentRequestId: number;
 
@@ -18,8 +23,11 @@ export interface DocumentState {
 
 export const useDocumentStore = create<DocumentState>((set, get) => ({
   document: null,
+  parsedDocument: null,
   isLoading: false,
+  isParsing: false,
   error: null,
+  parseError: null,
   isDraggingOver: false,
   currentRequestId: 0,
 
@@ -44,7 +52,10 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
     const requestId = get().currentRequestId + 1;
     set({
       isLoading: true,
+      isParsing: false,
       error: null,
+      parseError: null,
+      parsedDocument: null,
       currentRequestId: requestId,
     });
 
@@ -56,14 +67,35 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
         set({
           document: doc,
           isLoading: false,
+          isParsing: true,
           error: null,
         });
+
+        // Asynchronously parse raw markdown through Rust pulldown-cmark engine
+        try {
+          const parsed = await parseMarkdown(doc.rawContent);
+          if (get().currentRequestId === requestId) {
+            set({
+              parsedDocument: parsed,
+              isParsing: false,
+              parseError: null,
+            });
+          }
+        } catch (parseErr) {
+          if (get().currentRequestId === requestId) {
+            set({
+              parseError: parseErr as ParseError,
+              isParsing: false,
+            });
+          }
+        }
       }
     } catch (err) {
       if (get().currentRequestId === requestId) {
         set({
           error: err as FileErrorResponse,
           isLoading: false,
+          isParsing: false,
         });
       }
     }
@@ -72,13 +104,16 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
   closeDocument: () => {
     set({
       document: null,
+      parsedDocument: null,
       error: null,
+      parseError: null,
       isLoading: false,
+      isParsing: false,
     });
   },
 
   dismissError: () => {
-    set({ error: null });
+    set({ error: null, parseError: null });
   },
 
   setIsDraggingOver: (isDragging: boolean) => {

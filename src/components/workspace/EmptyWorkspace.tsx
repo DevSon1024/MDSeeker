@@ -1,4 +1,4 @@
-import { FileText, FolderOpen, ArrowDownToLine, Command, Sparkles, CheckCircle2, AlertTriangle, X, Loader2 } from "lucide-react";
+import { FileText, FolderOpen, ArrowDownToLine, Command, Sparkles, CheckCircle2, AlertTriangle, X, Loader2, Code2, ListTree } from "lucide-react";
 import { useDocumentStore } from "@/stores/documentStore";
 
 export function formatFileSize(bytes: number): string {
@@ -12,13 +12,18 @@ export function formatFileSize(bytes: number): string {
 export function EmptyWorkspace() {
   const {
     document,
+    parsedDocument,
     isLoading,
+    isParsing,
     error,
+    parseError,
     isDraggingOver,
     openDocumentDialog,
     closeDocument,
     dismissError,
   } = useDocumentStore();
+
+  const activeError = error || parseError;
 
   return (
     <div className="flex-1 flex flex-col items-center justify-center p-6 bg-[var(--fluent-bg-window)] text-[var(--fluent-text-primary)] select-none overflow-y-auto relative">
@@ -38,7 +43,7 @@ export function EmptyWorkspace() {
       )}
 
       {/* Error Presentation Banner */}
-      {error && (
+      {activeError && (
         <div
           role="alert"
           className="mb-6 max-w-lg w-full rounded-[var(--fluent-radius-lg)] bg-rose-500/10 border border-rose-500/30 p-3.5 shadow-sm text-left flex items-start gap-3 animate-in fade-in slide-in-from-top-2 duration-150"
@@ -47,7 +52,7 @@ export function EmptyWorkspace() {
           <div className="flex-1 space-y-1">
             <div className="flex items-center justify-between">
               <span className="text-[12px] font-bold text-rose-600 dark:text-rose-400">
-                {error.code.replace(/_/g, " ")}
+                {activeError.code.replace(/_/g, " ")}
               </span>
               <button
                 type="button"
@@ -59,16 +64,16 @@ export function EmptyWorkspace() {
               </button>
             </div>
             <p className="text-[12px] text-[var(--fluent-text-primary)] font-medium">
-              {error.message}
+              {activeError.message}
             </p>
-            {error.path && (
+            {"path" in activeError && typeof activeError.path === "string" && (
               <p className="text-[11px] text-[var(--fluent-text-secondary)] font-mono truncate max-w-md">
-                Path: {error.path}
+                Path: {activeError.path}
               </p>
             )}
-            {error.details && (
+            {typeof activeError.details === "string" && (
               <p className="text-[11px] text-[var(--fluent-text-tertiary)] italic">
-                {error.details}
+                {activeError.details}
               </p>
             )}
           </div>
@@ -84,8 +89,8 @@ export function EmptyWorkspace() {
           </p>
         </div>
       ) : document ? (
-        /* Loaded Document Placeholder Card (Phase 03 Scope) */
-        <div className="max-w-md w-full flex flex-col items-center text-center space-y-6">
+        /* Loaded Document Information Card */
+        <div className="max-w-lg w-full flex flex-col items-center text-center space-y-5">
           <div className="relative">
             <div className="w-20 h-20 rounded-2xl bg-[var(--fluent-bg-card)] border border-[var(--fluent-border-card)] shadow-[var(--fluent-shadow-card)] flex items-center justify-center text-[var(--fluent-accent)]">
               <FileText className="w-10 h-10 stroke-[1.5]" />
@@ -95,37 +100,103 @@ export function EmptyWorkspace() {
             </div>
           </div>
 
-          <div className="space-y-1.5 w-full">
+          <div className="space-y-1 w-full">
             <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[11px] font-medium mb-1">
               Document Loaded Successfully
             </div>
-            <h1 className="text-xl font-bold tracking-tight text-[var(--fluent-text-primary)] truncate max-w-sm mx-auto" title={document.fileName}>
+            <h1 className="text-xl font-bold tracking-tight text-[var(--fluent-text-primary)] truncate max-w-md mx-auto" title={document.fileName}>
               {document.fileName}
             </h1>
+            {parsedDocument?.metadata?.title && parsedDocument.metadata.title !== document.fileName && (
+              <p className="text-[13px] font-medium text-[var(--fluent-text-secondary)] truncate max-w-md mx-auto">
+                {parsedDocument.metadata.title}
+              </p>
+            )}
             <p className="text-[11px] text-[var(--fluent-text-tertiary)] font-mono truncate max-w-md mx-auto" title={document.canonicalPath}>
               {document.canonicalPath}
             </p>
           </div>
 
           {/* Document Properties Grid */}
-          <div className="grid grid-cols-2 gap-2 w-full max-w-xs text-left bg-[var(--fluent-bg-card)] border border-[var(--fluent-border-card)] rounded-[var(--fluent-radius-lg)] p-3 text-[12px] shadow-sm">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 w-full text-left bg-[var(--fluent-bg-card)] border border-[var(--fluent-border-card)] rounded-[var(--fluent-radius-lg)] p-3 text-[12px] shadow-sm">
             <div>
-              <span className="text-[11px] text-[var(--fluent-text-tertiary)] block">File Size</span>
+              <span className="text-[10px] text-[var(--fluent-text-tertiary)] block">File Size</span>
               <span className="font-medium text-[var(--fluent-text-primary)]">
                 {formatFileSize(document.fileSizeBytes)}
               </span>
             </div>
             <div>
-              <span className="text-[11px] text-[var(--fluent-text-tertiary)] block">Format</span>
+              <span className="text-[10px] text-[var(--fluent-text-tertiary)] block">Format</span>
               <span className="font-medium text-[var(--fluent-text-primary)] uppercase">
                 .{document.fileExtension} (UTF-8)
               </span>
             </div>
+            <div>
+              <span className="text-[10px] text-[var(--fluent-text-tertiary)] block">AST Blocks</span>
+              <span className="font-medium text-[var(--fluent-text-primary)]">
+                {isParsing ? "Parsing..." : (parsedDocument ? `${parsedDocument.blocks.length} blocks` : "—")}
+              </span>
+            </div>
+            <div>
+              <span className="text-[10px] text-[var(--fluent-text-tertiary)] block">Word Count</span>
+              <span className="font-medium text-[var(--fluent-text-primary)]">
+                {parsedDocument ? `${parsedDocument.metadata.wordCount.toLocaleString()}` : "—"}
+              </span>
+            </div>
           </div>
 
+          {/* AST Capabilities & Features Status */}
+          {parsedDocument && (
+            <div className="w-full flex items-center justify-center gap-1.5 flex-wrap text-[11px]">
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-[var(--fluent-bg-card)] border border-[var(--fluent-border-card)] text-[var(--fluent-text-secondary)]">
+                <ListTree className="w-3 h-3 text-[var(--fluent-accent)]" />
+                {parsedDocument.metadata.headingsCount} Headings
+              </span>
+              {parsedDocument.metadata.hasTables && (
+                <span className="px-2 py-0.5 rounded-md bg-[var(--fluent-bg-card)] border border-[var(--fluent-border-card)] text-[var(--fluent-text-secondary)]">
+                  Tables
+                </span>
+              )}
+              {parsedDocument.metadata.hasCodeBlocks && (
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-[var(--fluent-bg-card)] border border-[var(--fluent-border-card)] text-[var(--fluent-text-secondary)]">
+                  <Code2 className="w-3 h-3 text-[var(--fluent-accent)]" />
+                  Code Blocks
+                </span>
+              )}
+              {parsedDocument.metadata.hasMermaid && (
+                <span className="px-2 py-0.5 rounded-md bg-purple-500/10 border border-purple-500/30 text-purple-600 dark:text-purple-400">
+                  Mermaid
+                </span>
+              )}
+              {parsedDocument.metadata.hasTaskLists && (
+                <span className="px-2 py-0.5 rounded-md bg-[var(--fluent-bg-card)] border border-[var(--fluent-border-card)] text-[var(--fluent-text-secondary)]">
+                  Task Lists
+                </span>
+              )}
+              {parsedDocument.metadata.frontmatter && (
+                <span className="px-2 py-0.5 rounded-md bg-[var(--fluent-bg-card)] border border-[var(--fluent-border-card)] text-[var(--fluent-text-secondary)]">
+                  Frontmatter
+                </span>
+              )}
+            </div>
+          )}
+
           {/* Notice about rendering */}
-          <div className="text-[11px] text-[var(--fluent-text-secondary)] bg-[var(--fluent-bg-subtle-hover)] border border-[var(--fluent-border-subtle)] rounded-[var(--fluent-radius-md)] px-3.5 py-2 max-w-xs">
-            Raw file loaded ({document.rawContent.length} chars). Formatted CommonMark rendering and syntax highlighting will arrive in Phase 05.
+          <div className="text-[11px] text-[var(--fluent-text-secondary)] bg-[var(--fluent-bg-subtle-hover)] border border-[var(--fluent-border-subtle)] rounded-[var(--fluent-radius-md)] px-3.5 py-2 max-w-sm">
+            {isParsing ? (
+              <div className="flex items-center justify-center gap-2">
+                <Loader2 className="w-3.5 h-3.5 animate-spin text-[var(--fluent-accent)]" />
+                <span>Parsing AST via Rust pulldown-cmark engine...</span>
+              </div>
+            ) : parsedDocument ? (
+              <span>
+                Structured AST ready ({parsedDocument.parserVersion}). Formatted CommonMark visual reader will be implemented in Phase 05.
+              </span>
+            ) : (
+              <span>
+                Raw file loaded ({document.rawContent.length} chars). Ready for parsing.
+              </span>
+            )}
           </div>
 
           {/* Action buttons */}

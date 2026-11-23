@@ -1,13 +1,19 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { useDocumentStore } from "./documentStore";
 import * as docService from "@/services/documentService";
+import * as mdService from "@/services/markdownService";
 import { FileErrorResponse, LoadedDocument } from "@/types/document";
+import { MarkdownDocument } from "@/types/markdown";
 
 vi.mock("@/services/documentService", () => ({
   openMarkdownFileDialog: vi.fn(),
   readMarkdownFile: vi.fn(),
   validateMarkdownFile: vi.fn(),
   getFileMetadata: vi.fn(),
+}));
+
+vi.mock("@/services/markdownService", () => ({
+  parseMarkdown: vi.fn(),
 }));
 
 describe("useDocumentStore", () => {
@@ -20,12 +26,40 @@ describe("useDocumentStore", () => {
     rawContent: "# My Notes\n\nContent here.",
   };
 
+  const sampleParsed: MarkdownDocument = {
+    blocks: [
+      {
+        type: "heading",
+        level: 1,
+        id: null,
+        content: [{ type: "text", value: "My Notes" }],
+      },
+    ],
+    metadata: {
+      title: "My Notes",
+      wordCount: 4,
+      characterCount: 20,
+      readingTimeMinutes: 0.1,
+      frontmatter: null,
+      hasTables: false,
+      hasCodeBlocks: false,
+      hasMath: false,
+      hasMermaid: false,
+      hasTaskLists: false,
+      headingsCount: 1,
+    },
+    parserVersion: "pulldown-cmark-0.13",
+  };
+
   beforeEach(() => {
     vi.clearAllMocks();
     useDocumentStore.setState({
       document: null,
+      parsedDocument: null,
       isLoading: false,
+      isParsing: false,
       error: null,
+      parseError: null,
       isDraggingOver: false,
       currentRequestId: 0,
     });
@@ -34,13 +68,17 @@ describe("useDocumentStore", () => {
   it("initializes with default empty state", () => {
     const state = useDocumentStore.getState();
     expect(state.document).toBeNull();
+    expect(state.parsedDocument).toBeNull();
     expect(state.isLoading).toBe(false);
+    expect(state.isParsing).toBe(false);
     expect(state.error).toBeNull();
+    expect(state.parseError).toBeNull();
     expect(state.isDraggingOver).toBe(false);
   });
 
-  it("loads document successfully by path", async () => {
+  it("loads document and parses it successfully", async () => {
     vi.mocked(docService.readMarkdownFile).mockResolvedValue(sampleDoc);
+    vi.mocked(mdService.parseMarkdown).mockResolvedValue(sampleParsed);
 
     const promise = useDocumentStore.getState().loadDocumentByPath("C:/docs/notes.md");
     expect(useDocumentStore.getState().isLoading).toBe(true);
@@ -49,8 +87,11 @@ describe("useDocumentStore", () => {
 
     const state = useDocumentStore.getState();
     expect(state.isLoading).toBe(false);
+    expect(state.isParsing).toBe(false);
     expect(state.document).toEqual(sampleDoc);
+    expect(state.parsedDocument).toEqual(sampleParsed);
     expect(state.error).toBeNull();
+    expect(state.parseError).toBeNull();
   });
 
   it("captures structured error on load failure", async () => {
@@ -66,7 +107,28 @@ describe("useDocumentStore", () => {
     const state = useDocumentStore.getState();
     expect(state.isLoading).toBe(false);
     expect(state.document).toBeNull();
+    expect(state.parsedDocument).toBeNull();
     expect(state.error).toEqual(mockError);
+  });
+
+  it("preserves loaded raw document if parsing fails", async () => {
+    vi.mocked(docService.readMarkdownFile).mockResolvedValue(sampleDoc);
+    vi.mocked(mdService.parseMarkdown).mockRejectedValue({
+      code: "PARSE_ERROR",
+      message: "Failed to parse syntax.",
+    });
+
+    await useDocumentStore.getState().loadDocumentByPath("C:/docs/notes.md");
+
+    const state = useDocumentStore.getState();
+    expect(state.isLoading).toBe(false);
+    expect(state.isParsing).toBe(false);
+    expect(state.document).toEqual(sampleDoc);
+    expect(state.parsedDocument).toBeNull();
+    expect(state.parseError).toEqual({
+      code: "PARSE_ERROR",
+      message: "Failed to parse syntax.",
+    });
   });
 
   it("handles file dialog cancellation without error", async () => {
@@ -88,6 +150,7 @@ describe("useDocumentStore", () => {
       fileName: "guide.markdown",
       canonicalPath: "C:/docs/guide.markdown",
     });
+    vi.mocked(mdService.parseMarkdown).mockResolvedValue(sampleParsed);
 
     await useDocumentStore.getState().openDocumentDialog();
 
@@ -98,6 +161,7 @@ describe("useDocumentStore", () => {
   it("closes the document cleanly", () => {
     useDocumentStore.setState({
       document: sampleDoc,
+      parsedDocument: sampleParsed,
       error: { code: "SOME_ERR", message: "err" },
     });
 
@@ -105,16 +169,20 @@ describe("useDocumentStore", () => {
 
     const state = useDocumentStore.getState();
     expect(state.document).toBeNull();
+    expect(state.parsedDocument).toBeNull();
     expect(state.error).toBeNull();
+    expect(state.parseError).toBeNull();
   });
 
   it("dismisses error message", () => {
     useDocumentStore.setState({
       error: { code: "ERR", message: "Some error" },
+      parseError: { code: "PARSE_ERR", message: "Parse error" },
     });
 
     useDocumentStore.getState().dismissError();
     expect(useDocumentStore.getState().error).toBeNull();
+    expect(useDocumentStore.getState().parseError).toBeNull();
   });
 
   it("updates dragging over state", () => {
@@ -140,6 +208,7 @@ describe("useDocumentStore", () => {
     vi.mocked(docService.readMarkdownFile)
       .mockReturnValueOnce(firstPromise)
       .mockResolvedValueOnce(secondDoc);
+    vi.mocked(mdService.parseMarkdown).mockResolvedValue(sampleParsed);
 
     // Launch first request
     const p1 = useDocumentStore.getState().loadDocumentByPath("C:/docs/first.md");

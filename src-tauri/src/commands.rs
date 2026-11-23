@@ -47,6 +47,15 @@ pub fn validate_markdown_file(path: String) -> ValidationResult {
     file_manager::validate_file(&path)
 }
 
+/// Parses raw Markdown content into a structured, serializable MarkdownDocument AST.
+#[tauri::command]
+pub fn parse_markdown(
+    content: String,
+    options: Option<crate::markdown::MarkdownParseOptions>,
+) -> Result<crate::markdown::MarkdownDocument, crate::markdown::ParseError> {
+    crate::markdown::parse_markdown(&content, options)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
