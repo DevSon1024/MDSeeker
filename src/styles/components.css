@@ -1,0 +1,177 @@
+/* Window Drag Region */
+.tauri-drag-region {
+  -webkit-app-region: drag;
+  user-select: none;
+}
+
+.tauri-no-drag {
+  -webkit-app-region: no-drag;
+}
+
+/* Windows 11 Title Bar Controls */
+.fluent-window-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 46px;
+  height: 36px;
+  color: var(--fluent-text-primary);
+  background-color: transparent;
+  transition: background-color var(--fluent-transition-fast), color var(--fluent-transition-fast);
+  outline: none;
+  border: none;
+  cursor: default;
+}
+
+.fluent-window-btn:hover {
+  background-color: var(--fluent-bg-subtle-hover);
+}
+
+.fluent-window-btn:active {
+  background-color: var(--fluent-bg-subtle-active);
+}
+
+.fluent-window-btn-close:hover {
+  background-color: var(--fluent-close-hover) !important;
+  color: #ffffff !important;
+}
+
+.fluent-window-btn-close:active {
+  background-color: var(--fluent-close-active) !important;
+  color: #ffffff !important;
+}
+
+/* Fluent Icon Button */
+.fluent-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--fluent-radius-md);
+  color: var(--fluent-text-primary);
+  background-color: transparent;
+  border: 1px solid transparent;
+  padding: 6px;
+  transition: all var(--fluent-transition-fast);
+  outline: none;
+  cursor: pointer;
+}
+
+.fluent-icon-btn:hover:not(:disabled) {
+  background-color: var(--fluent-bg-subtle-hover);
+  border-color: var(--fluent-border-subtle);
+}
+
+.fluent-icon-btn:active:not(:disabled) {
+  background-color: var(--fluent-bg-subtle-active);
+}
+
+.fluent-icon-btn:focus-visible {
+  border-color: var(--fluent-focus-border);
+  box-shadow: 0 0 0 2px var(--fluent-accent-subtle);
+}
+
+.fluent-icon-btn:disabled {
+  color: var(--fluent-text-disabled);
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+/* Fluent Action Button (e.g. Primary Open Button) */
+.fluent-primary-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border-radius: var(--fluent-radius-md);
+  background-color: var(--fluent-accent);
+  color: var(--fluent-accent-text);
+  font-weight: 500;
+  font-size: 13px;
+  padding: 8px 16px;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  transition: all var(--fluent-transition-fast);
+  outline: none;
+  cursor: pointer;
+}
+
+.fluent-primary-btn:hover:not(:disabled) {
+  background-color: var(--fluent-accent-hover);
+}
+
+.fluent-primary-btn:active:not(:disabled) {
+  background-color: var(--fluent-accent-active);
+}
+
+.fluent-primary-btn:focus-visible {
+  box-shadow: 0 0 0 2px var(--fluent-focus-border);
+}
+
+/* Document Tab */
+.fluent-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 32px;
+  padding: 0 10px;
+  border-radius: var(--fluent-radius-lg);
+  font-size: 12px;
+  color: var(--fluent-text-secondary);
+  background-color: transparent;
+  border: 1px solid transparent;
+  transition: all var(--fluent-transition-fast);
+  cursor: pointer;
+  white-space: nowrap;
+  max-width: 220px;
+  position: relative;
+}
+
+.fluent-tab:hover {
+  background-color: var(--fluent-bg-subtle-hover);
+  color: var(--fluent-text-primary);
+}
+
+.fluent-tab.active {
+  background-color: var(--fluent-bg-card);
+  color: var(--fluent-text-primary);
+  border-color: var(--fluent-border-card);
+  box-shadow: var(--fluent-shadow-card);
+  font-weight: 500;
+}
+
+.fluent-tab-close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: var(--fluent-radius-xs);
+  color: var(--fluent-text-secondary);
+  transition: all var(--fluent-transition-fast);
+  background-color: transparent;
+  border: none;
+}
+
+.fluent-tab-close:hover {
+  background-color: var(--fluent-bg-subtle-hover);
+  color: var(--fluent-text-primary);
+}
+
+/* Custom Scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--fluent-scrollbar-thumb);
+  border-radius: var(--fluent-radius-pill);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--fluent-scrollbar-thumb-hover);
+}

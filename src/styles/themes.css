@@ -1,0 +1,107 @@
+/* Light Theme Variables */
+:root,
+[data-theme="light"] {
+  --fluent-bg-mica: #f3f3f3;
+  --fluent-bg-acrylic: rgba(243, 243, 243, 0.85);
+  --fluent-bg-window: #f9f9f9;
+  --fluent-bg-card: rgba(255, 255, 255, 0.85);
+  --fluent-bg-card-hover: rgba(255, 255, 255, 1);
+  --fluent-bg-flyout: #ffffff;
+  --fluent-bg-sidebar: #f9f9f9;
+  --fluent-bg-subtle-hover: rgba(0, 0, 0, 0.04);
+  --fluent-bg-subtle-active: rgba(0, 0, 0, 0.08);
+
+  --fluent-text-primary: #1b1b1b;
+  --fluent-text-secondary: #5c5c5c;
+  --fluent-text-tertiary: #8a8a8a;
+  --fluent-text-disabled: #b0b0b0;
+
+  --fluent-border-subtle: rgba(0, 0, 0, 0.06);
+  --fluent-border-card: rgba(0, 0, 0, 0.08);
+  --fluent-border-divider: rgba(0, 0, 0, 0.07);
+  --fluent-focus-border: #0067c0;
+
+  --fluent-accent: #0067c0;
+  --fluent-accent-hover: #1879cd;
+  --fluent-accent-active: #005fb8;
+  --fluent-accent-subtle: rgba(0, 103, 192, 0.1);
+  --fluent-accent-text: #ffffff;
+
+  --fluent-close-hover: #c42b1c;
+  --fluent-close-active: #b32719;
+
+  --fluent-scrollbar-thumb: rgba(0, 0, 0, 0.2);
+  --fluent-scrollbar-thumb-hover: rgba(0, 0, 0, 0.35);
+}
+
+/* Dark Theme Variables */
+[data-theme="dark"] {
+  --fluent-bg-mica: #202020;
+  --fluent-bg-acrylic: rgba(32, 32, 32, 0.85);
+  --fluent-bg-window: #272727;
+  --fluent-bg-card: rgba(44, 44, 44, 0.75);
+  --fluent-bg-card-hover: rgba(54, 54, 54, 0.9);
+  --fluent-bg-flyout: #2c2c2c;
+  --fluent-bg-sidebar: #242424;
+  --fluent-bg-subtle-hover: rgba(255, 255, 255, 0.06);
+  --fluent-bg-subtle-active: rgba(255, 255, 255, 0.09);
+
+  --fluent-text-primary: #ffffff;
+  --fluent-text-secondary: #a0a0a0;
+  --fluent-text-tertiary: #757575;
+  --fluent-text-disabled: #555555;
+
+  --fluent-border-subtle: rgba(255, 255, 255, 0.06);
+  --fluent-border-card: rgba(255, 255, 255, 0.09);
+  --fluent-border-divider: rgba(255, 255, 255, 0.07);
+  --fluent-focus-border: #60cdff;
+
+  --fluent-accent: #60cdff;
+  --fluent-accent-hover: #6dd4ff;
+  --fluent-accent-active: #51c0f4;
+  --fluent-accent-subtle: rgba(96, 205, 255, 0.15);
+  --fluent-accent-text: #000000;
+
+  --fluent-close-hover: #c42b1c;
+  --fluent-close-active: #b32719;
+
+  --fluent-scrollbar-thumb: rgba(255, 255, 255, 0.2);
+  --fluent-scrollbar-thumb-hover: rgba(255, 255, 255, 0.35);
+}
+
+/* System Dark Theme fallback when theme is system */
+@media (prefers-color-scheme: dark) {
+  [data-theme="system"] {
+    --fluent-bg-mica: #202020;
+    --fluent-bg-acrylic: rgba(32, 32, 32, 0.85);
+    --fluent-bg-window: #272727;
+    --fluent-bg-card: rgba(44, 44, 44, 0.75);
+    --fluent-bg-card-hover: rgba(54, 54, 54, 0.9);
+    --fluent-bg-flyout: #2c2c2c;
+    --fluent-bg-sidebar: #242424;
+    --fluent-bg-subtle-hover: rgba(255, 255, 255, 0.06);
+    --fluent-bg-subtle-active: rgba(255, 255, 255, 0.09);
+
+    --fluent-text-primary: #ffffff;
+    --fluent-text-secondary: #a0a0a0;
+    --fluent-text-tertiary: #757575;
+    --fluent-text-disabled: #555555;
+
+    --fluent-border-subtle: rgba(255, 255, 255, 0.06);
+    --fluent-border-card: rgba(255, 255, 255, 0.09);
+    --fluent-border-divider: rgba(255, 255, 255, 0.07);
+    --fluent-focus-border: #60cdff;
+
+    --fluent-accent: #60cdff;
+    --fluent-accent-hover: #6dd4ff;
+    --fluent-accent-active: #51c0f4;
+    --fluent-accent-subtle: rgba(96, 205, 255, 0.15);
+    --fluent-accent-text: #000000;
+
+    --fluent-close-hover: #c42b1c;
+    --fluent-close-active: #b32719;
+
+    --fluent-scrollbar-thumb: rgba(255, 255, 255, 0.2);
+    --fluent-scrollbar-thumb-hover: rgba(255, 255, 255, 0.35);
+  }
+}
