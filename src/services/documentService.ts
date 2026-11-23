@@ -94,3 +94,15 @@ export async function getFileMetadata(filePath: string): Promise<DocumentMetadat
 export async function revealInFileExplorer(filePath: string): Promise<void> {
   await invoke("reveal_in_explorer", { path: filePath });
 }
+
+/**
+ * Drains and returns all pending incoming file paths from the Rust startup queue.
+ */
+export async function getPendingFiles(): Promise<string[]> {
+  try {
+    return await invoke<string[]>("get_pending_files");
+  } catch (err) {
+    console.error("Failed to retrieve pending files from backend:", err);
+    return [];
+  }
+}

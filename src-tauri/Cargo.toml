@@ -21,6 +21,7 @@ serde_json = "1"
 dunce = "1"
 pulldown-cmark = { version = "0.13", default-features = false }
 syntect = { version = "5.2", default-features = false, features = ["default-syntaxes", "default-themes", "regex-fancy"] }
+tauri-plugin-single-instance = "2"
 
 [profile.dev]
 debug = 0

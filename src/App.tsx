@@ -8,6 +8,7 @@ import { ReaderToolbar } from "@/components/toolbar/ReaderToolbar";
 import { OutlineSidebar } from "@/components/sidebar/OutlineSidebar";
 import { Workspace } from "@/components/workspace/Workspace";
 import { StatusBar } from "@/components/status/StatusBar";
+import { initIncomingFileService } from "@/services/incomingFileService";
 
 export default function App() {
   const { initTheme, setViewMode, toggleSidebar, toggleSearch } = useUIStore();
@@ -137,7 +138,9 @@ export default function App() {
             setIsDraggingOver(false);
             const paths = event.payload.paths;
             if (paths && paths.length > 0) {
-              loadDocumentByPath(paths[0]);
+              for (const p of paths) {
+                loadDocumentByPath(p);
+              }
             }
           } else {
             setIsDraggingOver(false);
@@ -159,6 +162,34 @@ export default function App() {
       }
     };
   }, [loadDocumentByPath, setIsDraggingOver]);
+
+  // Listen for incoming files (CLI arguments, Explorer double-click, and second-instance forwards)
+  useEffect(() => {
+    let unlisten: (() => void) | undefined;
+    let isCancelled = false;
+
+    async function setupIncomingFiles() {
+      try {
+        unlisten = await initIncomingFileService(async (filePaths) => {
+          if (isCancelled) return;
+          for (const path of filePaths) {
+            await loadDocumentByPath(path);
+          }
+        });
+      } catch (err) {
+        console.error("Failed to setup incoming files:", err);
+      }
+    }
+
+    setupIncomingFiles();
+
+    return () => {
+      isCancelled = true;
+      if (unlisten) {
+        unlisten();
+      }
+    };
+  }, [loadDocumentByPath]);
 
   return (
     <div className="flex flex-col h-screen w-screen overflow-hidden bg-[var(--fluent-bg-mica)] text-[var(--fluent-text-primary)] font-sans antialiased border border-[var(--fluent-border-divider)] box-border">

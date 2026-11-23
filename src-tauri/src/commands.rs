@@ -93,6 +93,22 @@ pub fn reveal_in_explorer(path: String) -> Result<(), String> {
     Ok(())
 }
 
+/// Drains and returns all pending startup / incoming files from the queue.
+#[tauri::command]
+pub fn get_pending_files(
+    state: tauri::State<'_, crate::windows_integration::IncomingFileQueue>,
+) -> Vec<String> {
+    state.drain_all()
+}
+
+/// Inspects all currently pending files without clearing the queue.
+#[tauri::command]
+pub fn peek_pending_files(
+    state: tauri::State<'_, crate::windows_integration::IncomingFileQueue>,
+) -> Vec<String> {
+    state.peek_all()
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

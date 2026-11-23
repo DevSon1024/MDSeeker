@@ -2,17 +2,65 @@ pub mod commands;
 pub mod file_manager;
 pub mod highlighting;
 pub mod markdown;
+pub mod windows_integration;
 
 pub use commands::{
-    get_app_info, get_file_metadata, highlight_code, parse_markdown, ping, read_markdown_file,
-    reveal_in_explorer, validate_markdown_file,
+    get_app_info, get_file_metadata, get_pending_files, highlight_code, parse_markdown,
+    peek_pending_files, ping, read_markdown_file, reveal_in_explorer, validate_markdown_file,
 };
+pub use windows_integration::{process_incoming_args, IncomingFileQueue};
+
+use tauri::{Emitter, Manager};
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
+    // 1. Process cold startup CLI arguments
+    let initial_args: Vec<String> = std::env::args().collect();
+    let cwd = std::env::current_dir()
+        .map(|p| p.to_string_lossy().to_string())
+        .unwrap_or_else(|_| ".".to_string());
+
+    let candidate_args = if initial_args.len() > 1 {
+        &initial_args[1..]
+    } else {
+        &[]
+    };
+
+    let initial_files = windows_integration::process_incoming_args(candidate_args, &cwd);
+    let queue = windows_integration::IncomingFileQueue::new();
+    for path in initial_files {
+        queue.push_back(path);
+    }
+
     tauri::Builder::default()
+        // Register single-instance plugin before all other plugins
+        .plugin(tauri_plugin_single_instance::init(|app, args, cwd| {
+            let valid_paths = windows_integration::process_incoming_args(&args, &cwd);
+
+            // Buffer in queue so frontend can reliably drain even if not yet listening
+            if let Some(q) = app.try_state::<windows_integration::IncomingFileQueue>() {
+                for path in &valid_paths {
+                    q.push_back(path.clone());
+                }
+            }
+
+            // Restore, unminimize, and focus main window
+            if let Some(window) = app.get_webview_window("main") {
+                if window.is_minimized().unwrap_or(false) {
+                    let _ = window.unminimize();
+                }
+                let _ = window.show();
+                let _ = window.set_focus();
+            }
+
+            // Notify frontend
+            if !valid_paths.is_empty() {
+                let _ = app.emit("incoming-files", valid_paths);
+            }
+        }))
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_dialog::init())
+        .manage(queue)
         .invoke_handler(tauri::generate_handler![
             get_app_info,
             ping,
@@ -22,6 +70,8 @@ pub fn run() {
             parse_markdown,
             highlight_code,
             reveal_in_explorer,
+            get_pending_files,
+            peek_pending_files,
         ])
         .run(tauri::generate_context!())
         .expect("error while running MDSeeker application");
