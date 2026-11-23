@@ -1,0 +1,70 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --fluent-bg-mica: #f3f3f3;
+    --fluent-bg-card: rgba(255, 255, 255, 0.7);
+    --fluent-border-card: rgba(0, 0, 0, 0.08);
+    --fluent-text-primary: #1b1b1b;
+    --fluent-text-secondary: #5c5c5c;
+    --fluent-accent: #0067c0;
+    --fluent-accent-hover: #1879cd;
+    --fluent-accent-active: #005fb8;
+    --fluent-surface-hover: rgba(0, 0, 0, 0.04);
+    --fluent-surface-active: rgba(0, 0, 0, 0.07);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --fluent-bg-mica: #202020;
+      --fluent-bg-card: rgba(44, 44, 44, 0.75);
+      --fluent-border-card: rgba(255, 255, 255, 0.09);
+      --fluent-text-primary: #ffffff;
+      --fluent-text-secondary: #a0a0a0;
+      --fluent-accent: #60cdff;
+      --fluent-accent-hover: #6dd4ff;
+      --fluent-accent-active: #51c0f4;
+      --fluent-surface-hover: rgba(255, 255, 255, 0.06);
+      --fluent-surface-active: rgba(255, 255, 255, 0.09);
+    }
+  }
+
+  body {
+    font-family: "Segoe UI Variable Text", "Segoe UI", -apple-system, BlinkMacSystemFont, Roboto, "Helvetica Neue", sans-serif;
+    background-color: var(--fluent-bg-mica);
+    color: var(--fluent-text-primary);
+    user-select: none;
+    -webkit-user-select: none;
+    overflow: hidden;
+  }
+}
+
+/* Custom Windows 11 style scrollbars */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(120, 120, 120, 0.3);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(120, 120, 120, 0.5);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  ::before,
+  ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
