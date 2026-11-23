@@ -13,9 +13,14 @@ export default function App() {
   const { initTheme, setViewMode, toggleSidebar, toggleSearch } = useUIStore();
   const {
     document,
+    documents,
     openDocumentDialog,
     loadDocumentByPath,
     closeDocument,
+    closeAllDocuments,
+    activateNextTab,
+    activatePreviousTab,
+    activateTabByIndex,
     setIsDraggingOver,
   } = useDocumentStore();
 
@@ -36,24 +41,37 @@ export default function App() {
       if (e.ctrlKey || e.metaKey) {
         const key = e.key.toLowerCase();
 
-        if (key === "o") {
+        // Shift modifier combinations
+        if (e.shiftKey) {
+          if (key === "tab") {
+            e.preventDefault();
+            activatePreviousTab();
+          } else if (key === "w") {
+            e.preventDefault();
+            closeAllDocuments();
+          } else if (key === "o") {
+            e.preventDefault();
+            toggleSidebar();
+          }
+          return;
+        }
+
+        // Standard Ctrl combinations
+        if (key === "tab") {
+          e.preventDefault();
+          activateNextTab();
+        } else if (key === "o") {
           e.preventDefault();
           openDocumentDialog();
         } else if (key === "w") {
           e.preventDefault();
-          // If a document is loaded, close it. Do NOT close the application window.
-          if (document) {
+          if (documents.length > 0 || document) {
             closeDocument();
           }
-        } else if (key === "1") {
+        } else if (["1", "2", "3", "4", "5", "6", "7", "8", "9"].includes(key)) {
           e.preventDefault();
-          setViewMode("reading");
-        } else if (key === "2") {
-          e.preventDefault();
-          setViewMode("source");
-        } else if (key === "3") {
-          e.preventDefault();
-          setViewMode("split");
+          const tabIndex = parseInt(key, 10) - 1;
+          activateTabByIndex(tabIndex);
         } else if (key === "b") {
           e.preventDefault();
           toggleSidebar();
@@ -66,7 +84,20 @@ export default function App() {
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [initTheme, setViewMode, toggleSidebar, toggleSearch, openDocumentDialog, closeDocument, document]);
+  }, [
+    initTheme,
+    setViewMode,
+    toggleSidebar,
+    toggleSearch,
+    openDocumentDialog,
+    closeDocument,
+    closeAllDocuments,
+    activateNextTab,
+    activatePreviousTab,
+    activateTabByIndex,
+    document,
+    documents.length,
+  ]);
 
   // Drag and Drop Integration
   useEffect(() => {

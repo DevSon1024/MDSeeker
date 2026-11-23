@@ -1,6 +1,7 @@
 import React from "react";
 import { HeadingBlock as HeadingBlockType } from "@/types/markdown";
 import { MarkdownInline } from "../MarkdownInline";
+import { inlinesToSlug } from "@/components/sidebar/outlineUtils";
 
 export const HeadingBlock: React.FC<{ node: HeadingBlockType; docPath?: string }> = ({
   node,
@@ -10,7 +11,7 @@ export const HeadingBlock: React.FC<{ node: HeadingBlockType; docPath?: string }
     <MarkdownInline key={idx} node={child} docPath={docPath} />
   ));
 
-  const id = node.id ?? undefined;
+  const id = node.id || inlinesToSlug(node.content);
 
   switch (node.level) {
     case 1:

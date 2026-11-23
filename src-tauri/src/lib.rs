@@ -5,7 +5,7 @@ pub mod markdown;
 
 pub use commands::{
     get_app_info, get_file_metadata, highlight_code, parse_markdown, ping, read_markdown_file,
-    validate_markdown_file,
+    reveal_in_explorer, validate_markdown_file,
 };
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -21,6 +21,7 @@ pub fn run() {
             validate_markdown_file,
             parse_markdown,
             highlight_code,
+            reveal_in_explorer,
         ])
         .run(tauri::generate_context!())
         .expect("error while running MDSeeker application");

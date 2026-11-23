@@ -39,3 +39,25 @@ export interface LoadedDocument {
   lastModifiedTimestamp: number | null;
   rawContent: string;
 }
+
+export interface OpenDocument {
+  id: string;
+  canonicalPath: string;
+  fileName: string;
+  fileExtension: string;
+  fileSizeBytes: number;
+  lastModifiedTimestamp: number | null;
+  rawContent: string;
+
+  parsedDocument: import("./markdown").MarkdownDocument | null;
+
+  isLoading: boolean;
+  isParsing: boolean;
+  error: FileErrorResponse | null;
+  parseError: import("./markdown").ParseError | null;
+
+  lastAccessedAt: number;
+
+  readerScrollPosition: number;
+  sourceScrollPosition: number;
+}

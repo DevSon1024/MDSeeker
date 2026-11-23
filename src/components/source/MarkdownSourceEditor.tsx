@@ -1,5 +1,6 @@
-import { useRef, useImperativeHandle, forwardRef, useState, useEffect, useMemo } from "react";
+import { useRef, useImperativeHandle, forwardRef, useState, useEffect, useMemo, useCallback } from "react";
 import { useUIStore } from "@/stores/uiStore";
+import { useDocumentStore } from "@/stores/documentStore";
 import { SourceToolbar } from "./SourceToolbar";
 import { useSourceEditor, SourceEditorHandle } from "./hooks/useSourceEditor";
 
@@ -49,14 +50,39 @@ export const MarkdownSourceEditor = forwardRef<SourceEditorHandle, MarkdownSourc
       }
     }, [theme]);
 
+    const activeDocumentId = useDocumentStore((s) => s.activeDocumentId);
+    const getActiveDocument = useDocumentStore((s) => s.getActiveDocument);
+    const updateDocumentScrollPosition = useDocumentStore((s) => s.updateDocumentScrollPosition);
+
+    const handleScroll = useCallback(
+      (scrollTop: number, scrollHeight: number, clientHeight: number) => {
+        if (activeDocumentId) {
+          updateDocumentScrollPosition(activeDocumentId, "source", scrollTop);
+        }
+        if (onScroll) {
+          onScroll(scrollTop, scrollHeight, clientHeight);
+        }
+      },
+      [activeDocumentId, updateDocumentScrollPosition, onScroll]
+    );
+
     const handle = useSourceEditor({
       containerRef,
       content,
       isDark,
-      onScroll,
+      onScroll: handleScroll,
     });
 
     useImperativeHandle(ref, () => handle, [handle]);
+
+    // Restore scroll position when active document changes or on mount
+    useEffect(() => {
+      if (!activeDocumentId) return;
+      const activeDoc = getActiveDocument();
+      if (activeDoc && typeof activeDoc.sourceScrollPosition === "number") {
+        handle.scrollToPosition(activeDoc.sourceScrollPosition);
+      }
+    }, [activeDocumentId, getActiveDocument, handle]);
 
     const lineCount = useMemo(() => {
       return content.length === 0 ? 0 : content.split("\n").length;

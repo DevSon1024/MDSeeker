@@ -87,3 +87,10 @@ export async function validateMarkdownFile(filePath: string): Promise<Validation
 export async function getFileMetadata(filePath: string): Promise<DocumentMetadata> {
   return await invoke<DocumentMetadata>("get_file_metadata", { path: filePath });
 }
+
+/**
+ * Reveals a file in Windows File Explorer.
+ */
+export async function revealInFileExplorer(filePath: string): Promise<void> {
+  await invoke("reveal_in_explorer", { path: filePath });
+}

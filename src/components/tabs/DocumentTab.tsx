@@ -1,5 +1,5 @@
 import React from "react";
-import { FileText, X } from "lucide-react";
+import { FileText, X, Loader2, AlertCircle } from "lucide-react";
 import { Tooltip } from "@/components/common/Tooltip";
 
 export interface TabItem {
@@ -7,6 +7,8 @@ export interface TabItem {
   title: string;
   path?: string;
   isActive: boolean;
+  isLoading?: boolean;
+  hasError?: boolean;
   isModified?: boolean;
 }
 
@@ -14,19 +16,71 @@ interface DocumentTabProps {
   tab: TabItem;
   onSelect?: (id: string) => void;
   onClose?: (id: string, e: React.MouseEvent) => void;
+  onContextMenu?: (id: string, e: React.MouseEvent) => void;
+  draggable?: boolean;
+  onDragStart?: (e: React.DragEvent) => void;
+  onDragOver?: (e: React.DragEvent) => void;
+  onDrop?: (e: React.DragEvent) => void;
 }
 
-export function DocumentTab({ tab, onSelect, onClose }: DocumentTabProps) {
+export function DocumentTab({
+  tab,
+  onSelect,
+  onClose,
+  onContextMenu,
+  draggable,
+  onDragStart,
+  onDragOver,
+  onDrop,
+}: DocumentTabProps) {
   const content = (
     <div
       onClick={() => onSelect?.(tab.id)}
+      onMouseDown={(e) => {
+        // Middle mouse button closes tab
+        if (e.button === 1) {
+          e.preventDefault();
+          onClose?.(tab.id, e);
+        }
+      }}
+      onAuxClick={(e) => {
+        // Middle mouse button closes tab
+        if (e.button === 1) {
+          e.preventDefault();
+          onClose?.(tab.id, e);
+        }
+      }}
+      onContextMenu={(e) => {
+        e.preventDefault();
+        onContextMenu?.(tab.id, e);
+      }}
       role="tab"
       aria-selected={tab.isActive}
-      className={`fluent-tab group ${tab.isActive ? "active" : ""}`}
+      draggable={draggable}
+      onDragStart={onDragStart}
+      onDragOver={onDragOver}
+      onDrop={onDrop}
+      className={`fluent-tab group cursor-default transition-all ${
+        tab.isActive ? "active" : ""
+      }`}
     >
-      <FileText className={`w-3.5 h-3.5 flex-shrink-0 ${tab.isActive ? "text-[var(--fluent-accent)]" : "text-[var(--fluent-text-tertiary)]"}`} />
-      
-      <span className="truncate max-w-[140px] text-[12px]">
+      {/* Icon or Status Indicator */}
+      {tab.isLoading ? (
+        <Loader2 className="w-3.5 h-3.5 text-[var(--fluent-accent)] animate-spin flex-shrink-0" />
+      ) : tab.hasError ? (
+        <AlertCircle className="w-3.5 h-3.5 text-rose-500 flex-shrink-0" />
+      ) : (
+        <FileText
+          className={`w-3.5 h-3.5 flex-shrink-0 ${
+            tab.isActive
+              ? "text-[var(--fluent-accent)]"
+              : "text-[var(--fluent-text-tertiary)] group-hover:text-[var(--fluent-text-secondary)]"
+          }`}
+        />
+      )}
+
+      {/* Tab Title */}
+      <span className="truncate max-w-[140px] text-[12px] select-none">
         {tab.title}
       </span>
 
@@ -37,6 +91,7 @@ export function DocumentTab({ tab, onSelect, onClose }: DocumentTabProps) {
         />
       )}
 
+      {/* Close Tab Button */}
       {onClose && (
         <button
           type="button"

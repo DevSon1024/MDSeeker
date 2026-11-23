@@ -53,7 +53,7 @@ export function Workspace() {
                 </span>
                 <button
                   type="button"
-                  onClick={dismissError}
+                  onClick={() => dismissError()}
                   aria-label="Dismiss error"
                   className="text-rose-500 hover:text-rose-700 dark:hover:text-rose-300 p-0.5 rounded"
                 >

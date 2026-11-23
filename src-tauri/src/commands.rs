@@ -66,6 +66,33 @@ pub fn highlight_code(
     crate::highlighting::highlight_code(&code, language.as_deref(), theme.as_deref())
 }
 
+/// Reveals a file in Windows File Explorer after strictly validating its path.
+#[tauri::command]
+pub fn reveal_in_explorer(path: String) -> Result<(), String> {
+    let validation = file_manager::validate_file(&path);
+    if !validation.is_valid {
+        return Err("Cannot reveal file: path is invalid or file does not exist".to_string());
+    }
+
+    let canonical = validation.canonical_path.unwrap_or(path);
+    let win_path = canonical.replace('/', "\\");
+
+    #[cfg(target_os = "windows")]
+    {
+        std::process::Command::new("explorer.exe")
+            .arg(format!("/select,{}", win_path))
+            .spawn()
+            .map_err(|e| format!("Failed to launch File Explorer: {}", e))?;
+    }
+
+    #[cfg(not(target_os = "windows"))]
+    {
+        let _ = win_path;
+    }
+
+    Ok(())
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -106,5 +133,12 @@ mod tests {
         assert_eq!(res.lines.len(), 1);
         let reconstructed: String = res.lines.iter().flat_map(|l| &l.tokens).map(|t| t.content.as_str()).collect();
         assert_eq!(reconstructed, "let a = 1;");
+    }
+
+    #[test]
+    fn test_command_reveal_in_explorer_invalid_path() {
+        let res = reveal_in_explorer("C:/nonexistent_file_xyz_123.md".to_string());
+        assert!(res.is_err());
+        assert!(res.unwrap_err().contains("Cannot reveal file"));
     }
 }

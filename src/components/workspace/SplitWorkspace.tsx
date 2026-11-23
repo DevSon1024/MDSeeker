@@ -1,9 +1,10 @@
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import { LoadedDocument } from "@/types/document";
 import { MarkdownDocument } from "@/types/markdown";
 import { MarkdownContent } from "@/components/markdown/MarkdownContent";
 import { MarkdownSourceEditor } from "@/components/source/MarkdownSourceEditor";
 import { SourceEditorHandle } from "@/components/source/hooks/useSourceEditor";
+import { useDocumentStore } from "@/stores/documentStore";
 import { AlertTriangle } from "lucide-react";
 
 interface SplitWorkspaceProps {
@@ -21,8 +22,30 @@ export function SplitWorkspace({ document, parsedDocument }: SplitWorkspaceProps
   const sourceEditorRef = useRef<SourceEditorHandle>(null);
   const isSyncingRef = useRef(false);
 
+  const activeDocumentId = useDocumentStore((s) => s.activeDocumentId);
+  const getActiveDocument = useDocumentStore((s) => s.getActiveDocument);
+  const updateDocumentScrollPosition = useDocumentStore((s) => s.updateDocumentScrollPosition);
+
+  // Restore scroll positions when active document changes
+  useEffect(() => {
+    if (!activeDocumentId) return;
+    const doc = getActiveDocument();
+    if (doc) {
+      if (typeof doc.readerScrollPosition === "number" && readerScrollRef.current) {
+        readerScrollRef.current.scrollTop = doc.readerScrollPosition;
+      }
+      if (typeof doc.sourceScrollPosition === "number" && sourceEditorRef.current) {
+        sourceEditorRef.current.scrollToPosition(doc.sourceScrollPosition);
+      }
+    }
+  }, [activeDocumentId, getActiveDocument]);
+
   // Synchronized scrolling: Reader -> Source
   const handleReaderScroll = useCallback(() => {
+    if (activeDocumentId && readerScrollRef.current) {
+      updateDocumentScrollPosition(activeDocumentId, "reader", readerScrollRef.current.scrollTop);
+    }
+
     if (!isSyncEnabled || isSyncingRef.current || !readerScrollRef.current) return;
 
     const el = readerScrollRef.current;
@@ -35,11 +58,15 @@ export function SplitWorkspace({ document, parsedDocument }: SplitWorkspaceProps
     setTimeout(() => {
       isSyncingRef.current = false;
     }, 40);
-  }, [isSyncEnabled]);
+  }, [isSyncEnabled, activeDocumentId, updateDocumentScrollPosition]);
 
   // Synchronized scrolling: Source -> Reader
   const handleSourceScroll = useCallback(
     (scrollTop: number, scrollHeight: number, clientHeight: number) => {
+      if (activeDocumentId) {
+        updateDocumentScrollPosition(activeDocumentId, "source", scrollTop);
+      }
+
       if (!isSyncEnabled || isSyncingRef.current || !readerScrollRef.current) return;
 
       const maxScroll = scrollHeight - clientHeight;
@@ -54,7 +81,7 @@ export function SplitWorkspace({ document, parsedDocument }: SplitWorkspaceProps
         isSyncingRef.current = false;
       }, 40);
     },
-    [isSyncEnabled]
+    [isSyncEnabled, activeDocumentId, updateDocumentScrollPosition]
   );
 
   // Resizable Divider Pointer Events

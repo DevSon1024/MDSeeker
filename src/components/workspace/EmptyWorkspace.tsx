@@ -56,7 +56,7 @@ export function EmptyWorkspace() {
               </span>
               <button
                 type="button"
-                onClick={dismissError}
+                onClick={() => dismissError()}
                 aria-label="Dismiss error"
                 className="text-rose-500 hover:text-rose-700 dark:hover:text-rose-300 p-0.5 rounded"
               >
@@ -211,7 +211,7 @@ export function EmptyWorkspace() {
             </button>
             <button
               type="button"
-              onClick={closeDocument}
+              onClick={() => closeDocument()}
               className="fluent-icon-btn border border-[var(--fluent-border-card)] bg-[var(--fluent-bg-card)] hover:bg-[var(--fluent-bg-subtle-hover)] text-[12px] py-2 px-3.5 rounded-[var(--fluent-radius-md)]"
             >
               <X className="w-3.5 h-3.5 text-rose-500 mr-1" />

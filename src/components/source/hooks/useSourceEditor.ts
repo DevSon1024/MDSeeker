@@ -17,6 +17,8 @@ export interface SourceEditorHandle {
   closeSearch: () => void;
   scrollToRatio: (ratio: number) => void;
   getScrollRatio: () => number;
+  scrollToPosition: (pos: number) => void;
+  getScrollPosition: () => number;
 }
 
 export function useSourceEditor({
@@ -123,10 +125,27 @@ export function useSourceEditor({
     return maxScroll > 0 ? scroller.scrollTop / maxScroll : 0;
   }, []);
 
+  const scrollToPosition = useCallback((pos: number) => {
+    const view = viewRef.current;
+    if (!view) return;
+    const scroller = view.scrollDOM;
+    if (scroller) {
+      scroller.scrollTop = pos;
+    }
+  }, []);
+
+  const getScrollPosition = useCallback((): number => {
+    const view = viewRef.current;
+    if (!view) return 0;
+    return view.scrollDOM ? view.scrollDOM.scrollTop : 0;
+  }, []);
+
   return {
     openSearch,
     closeSearch,
     scrollToRatio,
     getScrollRatio,
+    scrollToPosition,
+    getScrollPosition,
   };
 }

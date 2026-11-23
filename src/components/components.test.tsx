@@ -29,6 +29,8 @@ describe("Phase 03 Components & Document Integration", () => {
       isSearchOpen: false,
     });
     useDocumentStore.setState({
+      documents: [],
+      activeDocumentId: null,
       document: null,
       isLoading: false,
       error: null,
