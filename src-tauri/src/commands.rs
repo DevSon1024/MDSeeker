@@ -1,4 +1,7 @@
 use serde::{Deserialize, Serialize};
+use crate::file_manager::{
+    self, DocumentMetadata, DocumentResponse, FileErrorResponse, ValidationResult,
+};
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct AppInfo {
@@ -26,6 +29,24 @@ pub fn ping(message: Option<String>) -> String {
     }
 }
 
+/// Reads a Markdown file (.md, .markdown) after strictly validating path, extension, UTF-8, and size limits.
+#[tauri::command]
+pub fn read_markdown_file(path: String) -> Result<DocumentResponse, FileErrorResponse> {
+    file_manager::read_markdown_file(&path).map_err(|err| err.into())
+}
+
+/// Retrieves validated metadata for a Markdown file.
+#[tauri::command]
+pub fn get_file_metadata(path: String) -> Result<DocumentMetadata, FileErrorResponse> {
+    file_manager::get_metadata(&path).map_err(|err| err.into())
+}
+
+/// Validates a candidate Markdown file without loading its full content.
+#[tauri::command]
+pub fn validate_markdown_file(path: String) -> ValidationResult {
+    file_manager::validate_file(&path)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -49,5 +70,13 @@ mod tests {
     fn test_ping_with_message() {
         let res = ping(Some("hello from frontend".to_string()));
         assert_eq!(res, "pong: hello from frontend");
+    }
+
+    #[test]
+    fn test_command_validate_nonexistent() {
+        let res = validate_markdown_file("D:/nonexistent_file_xyz.md".to_string());
+        assert!(!res.is_valid);
+        assert!(res.error.is_some());
+        assert_eq!(res.error.unwrap().code, "FILE_NOT_FOUND");
     }
 }

@@ -1,19 +1,23 @@
 import { Plus } from "lucide-react";
 import { DocumentTab, TabItem } from "./DocumentTab";
 import { Tooltip } from "@/components/common/Tooltip";
+import { useDocumentStore } from "@/stores/documentStore";
 
 export function TabBar() {
-  // Visual welcome tab representation for Phase 2
-  const welcomeTab: TabItem = {
-    id: "welcome",
-    title: "Welcome",
-    isActive: true,
-  };
+  const { document, openDocumentDialog, closeDocument } = useDocumentStore();
 
-  const handleNewTabClick = () => {
-    // Phase 2 scope: placeholder only
-    console.info("New tab button clicked - Multi-document tab management is scheduled for Phase 8.");
-  };
+  const currentTab: TabItem = document
+    ? {
+        id: document.canonicalPath,
+        title: document.fileName,
+        path: document.canonicalPath,
+        isActive: true,
+      }
+    : {
+        id: "welcome",
+        title: "Welcome",
+        isActive: true,
+      };
 
   return (
     <div
@@ -21,15 +25,18 @@ export function TabBar() {
       aria-label="Document tabs"
       className="h-[var(--fluent-tabbar-height)] flex items-center px-2 gap-1 bg-[var(--fluent-bg-mica)] border-b border-[var(--fluent-border-divider)] overflow-x-auto select-none flex-shrink-0"
     >
-      {/* Welcome tab representation */}
-      <DocumentTab tab={welcomeTab} />
+      {/* Active Tab */}
+      <DocumentTab
+        tab={currentTab}
+        onClose={document ? () => closeDocument() : undefined}
+      />
 
-      {/* New tab visual button */}
-      <Tooltip content="New tab (Phase 8)" position="bottom">
+      {/* Open/New Document Button */}
+      <Tooltip content="Open Markdown file (Ctrl+O)" position="bottom">
         <button
           type="button"
-          onClick={handleNewTabClick}
-          aria-label="New document tab"
+          onClick={openDocumentDialog}
+          aria-label="Open Markdown file"
           className="fluent-icon-btn h-7 w-7 text-[var(--fluent-text-secondary)] hover:text-[var(--fluent-text-primary)]"
         >
           <Plus className="w-4 h-4" />

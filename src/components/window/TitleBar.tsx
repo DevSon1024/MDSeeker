@@ -2,9 +2,11 @@ import { getCurrentWindow } from "@tauri-apps/api/window";
 import { WindowControls } from "./WindowControls";
 import { FileCode2 } from "lucide-react";
 import { useUIStore } from "@/stores/uiStore";
+import { useDocumentStore } from "@/stores/documentStore";
 
 export function TitleBar() {
   const { setIsMaximized } = useUIStore();
+  const { document } = useDocumentStore();
 
   const handleDoubleClick = async () => {
     try {
@@ -33,12 +35,16 @@ export function TitleBar() {
         </span>
       </div>
 
-      {/* Middle Window Drag Area */}
+      {/* Middle Window Drag Area with Document Title */}
       <div
         data-tauri-drag-region
-        className="flex-1 h-full flex items-center justify-center text-[12px] text-[var(--fluent-text-tertiary)]"
+        className="flex-1 h-full flex items-center justify-center text-[12px] text-[var(--fluent-text-secondary)] truncate px-4"
       >
-        {/* Placeholder title or empty during no document open */}
+        {document ? (
+          <span className="truncate max-w-sm font-medium">
+            {document.fileName}
+          </span>
+        ) : null}
       </div>
 
       {/* Window Controls */}
