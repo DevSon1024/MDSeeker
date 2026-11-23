@@ -6,7 +6,7 @@ import { TitleBar } from "@/components/window/TitleBar";
 import { TabBar } from "@/components/tabs/TabBar";
 import { ReaderToolbar } from "@/components/toolbar/ReaderToolbar";
 import { OutlineSidebar } from "@/components/sidebar/OutlineSidebar";
-import { EmptyWorkspace } from "@/components/workspace/EmptyWorkspace";
+import { Workspace } from "@/components/workspace/Workspace";
 import { StatusBar } from "@/components/status/StatusBar";
 
 export default function App() {
@@ -144,7 +144,7 @@ export default function App() {
       <div className="flex flex-1 overflow-hidden relative">
         <OutlineSidebar />
         <main className="flex-1 flex flex-col h-full overflow-hidden bg-[var(--fluent-bg-window)]">
-          <EmptyWorkspace />
+          <Workspace />
         </main>
       </div>
 
