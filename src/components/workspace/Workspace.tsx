@@ -2,10 +2,12 @@ import { useDocumentStore } from "@/stores/documentStore";
 import { useUIStore } from "@/stores/uiStore";
 import { EmptyWorkspace } from "./EmptyWorkspace";
 import { MarkdownReader } from "@/components/markdown/MarkdownReader";
-import { ArrowDownToLine, AlertTriangle, X, Loader2, Code2, Columns2, BookOpen } from "lucide-react";
+import { MarkdownSourceEditor } from "@/components/source/MarkdownSourceEditor";
+import { SplitWorkspace } from "./SplitWorkspace";
+import { ArrowDownToLine, AlertTriangle, X, Loader2 } from "lucide-react";
 
 export function Workspace() {
-  const { viewMode, setViewMode } = useUIStore();
+  const { viewMode } = useUIStore();
   const {
     document,
     parsedDocument,
@@ -95,71 +97,36 @@ export function Workspace() {
             Parsing Markdown AST...
           </p>
         </div>
-      ) : parsedDocument ? (
+      ) : (
         /* Active Document View Based on ViewMode */
         viewMode === "reading" ? (
-          <MarkdownReader
-            document={parsedDocument}
-            canonicalPath={document.canonicalPath}
+          parsedDocument ? (
+            <MarkdownReader
+              document={parsedDocument}
+              canonicalPath={document.canonicalPath}
+              fileName={document.fileName}
+            />
+          ) : (
+            <div className="flex-1 flex flex-col p-6 overflow-hidden">
+              <div className="mb-3 text-[12px] text-amber-500 font-medium">
+                Could not parse formatted AST. Displaying raw document content:
+              </div>
+              <pre className="flex-1 p-4 rounded-[var(--fluent-radius-md)] bg-[var(--fluent-bg-card)] border border-[var(--fluent-border-card)] overflow-auto font-mono text-[13px] text-[var(--fluent-text-primary)]">
+                {document.rawContent}
+              </pre>
+            </div>
+          )
+        ) : viewMode === "source" ? (
+          <MarkdownSourceEditor
+            content={document.rawContent}
             fileName={document.fileName}
           />
-        ) : viewMode === "source" ? (
-          /* Placeholder for Phase 06 Source Inspection Mode */
-          <div className="flex-1 flex flex-col items-center justify-center p-8 text-center space-y-4">
-            <div className="w-16 h-16 rounded-2xl bg-[var(--fluent-bg-card)] border border-[var(--fluent-border-card)] flex items-center justify-center text-[var(--fluent-accent)]">
-              <Code2 className="w-8 h-8" />
-            </div>
-            <div className="space-y-1.5 max-w-sm">
-              <h2 className="text-lg font-bold text-[var(--fluent-text-primary)]">
-                Source Inspection Mode
-              </h2>
-              <p className="text-[12px] text-[var(--fluent-text-secondary)]">
-                Read-only CodeMirror 6 source inspection will be implemented in Phase 06.
-              </p>
-            </div>
-            <button
-              type="button"
-              onClick={() => setViewMode("reading")}
-              className="fluent-primary-btn text-[12px] py-1.5 px-3"
-            >
-              <BookOpen className="w-3.5 h-3.5" />
-              <span>Switch to Reading Mode</span>
-            </button>
-          </div>
         ) : (
-          /* Placeholder for Phase 06 Split Mode */
-          <div className="flex-1 flex flex-col items-center justify-center p-8 text-center space-y-4">
-            <div className="w-16 h-16 rounded-2xl bg-[var(--fluent-bg-card)] border border-[var(--fluent-border-card)] flex items-center justify-center text-[var(--fluent-accent)]">
-              <Columns2 className="w-8 h-8" />
-            </div>
-            <div className="space-y-1.5 max-w-sm">
-              <h2 className="text-lg font-bold text-[var(--fluent-text-primary)]">
-                Synchronized Split Mode
-              </h2>
-              <p className="text-[12px] text-[var(--fluent-text-secondary)]">
-                Dual-pane synchronized reading and source view will be implemented in Phase 06.
-              </p>
-            </div>
-            <button
-              type="button"
-              onClick={() => setViewMode("reading")}
-              className="fluent-primary-btn text-[12px] py-1.5 px-3"
-            >
-              <BookOpen className="w-3.5 h-3.5" />
-              <span>Switch to Reading Mode</span>
-            </button>
-          </div>
+          <SplitWorkspace
+            document={document}
+            parsedDocument={parsedDocument}
+          />
         )
-      ) : (
-        /* Parse failure fallback - show raw content in safe pre block */
-        <div className="flex-1 flex flex-col p-6 overflow-hidden">
-          <div className="mb-3 text-[12px] text-amber-500 font-medium">
-            Could not parse formatted AST. Displaying raw document content:
-          </div>
-          <pre className="flex-1 p-4 rounded-[var(--fluent-radius-md)] bg-[var(--fluent-bg-card)] border border-[var(--fluent-border-card)] overflow-auto font-mono text-[13px] text-[var(--fluent-text-primary)]">
-            {document.rawContent}
-          </pre>
-        </div>
       )}
     </div>
   );

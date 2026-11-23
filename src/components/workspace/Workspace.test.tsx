@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
-import { render, screen, cleanup, fireEvent } from "@testing-library/react";
+import { render, screen, cleanup } from "@testing-library/react";
 import { Workspace } from "./Workspace";
 import { useDocumentStore } from "@/stores/documentStore";
 import { useUIStore } from "@/stores/uiStore";
@@ -101,7 +101,7 @@ describe("Workspace Component", () => {
     expect(screen.getByText("Hello world content.")).toBeDefined();
   });
 
-  it("renders source mode placeholder when viewMode is source and supports switching back", () => {
+  it("renders source mode editor when viewMode is source", () => {
     useDocumentStore.setState({
       document: sampleDoc,
       parsedDocument: sampleParsed,
@@ -110,14 +110,12 @@ describe("Workspace Component", () => {
 
     render(<Workspace />);
 
-    expect(screen.getByText("Source Inspection Mode")).toBeDefined();
-    const switchBtn = screen.getByRole("button", { name: "Switch to Reading Mode" });
-    fireEvent.click(switchBtn);
-
-    expect(useUIStore.getState().viewMode).toBe("reading");
+    expect(screen.getByRole("region", { name: "Markdown source inspection viewer" })).toBeDefined();
+    expect(screen.getByText("READ-ONLY")).toBeDefined();
+    expect(screen.getByText("sample.md")).toBeDefined();
   });
 
-  it("renders split mode placeholder when viewMode is split", () => {
+  it("renders split mode workspace when viewMode is split", () => {
     useDocumentStore.setState({
       document: sampleDoc,
       parsedDocument: sampleParsed,
@@ -126,7 +124,9 @@ describe("Workspace Component", () => {
 
     render(<Workspace />);
 
-    expect(screen.getByText("Synchronized Split Mode")).toBeDefined();
+    expect(screen.getByRole("separator", { name: "Resize split panels" })).toBeDefined();
+    expect(screen.getByRole("region", { name: "Split reading pane" })).toBeDefined();
+    expect(screen.getByRole("region", { name: "Markdown source inspection viewer" })).toBeDefined();
   });
 
   it("renders parse error banner and falls back to raw content pre block", () => {
