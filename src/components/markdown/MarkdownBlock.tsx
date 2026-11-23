@@ -9,6 +9,7 @@ import { TableBlock } from "./blocks/TableBlock";
 import { ThematicBreakBlock } from "./blocks/ThematicBreakBlock";
 import { HtmlBlock } from "./blocks/HtmlBlock";
 import { FootnoteBlock } from "./blocks/FootnoteBlock";
+import { BlockMath } from "./math/BlockMath";
 
 interface MarkdownBlockProps {
   node: BlockNode;
@@ -38,6 +39,8 @@ export const MarkdownBlock: React.FC<MarkdownBlockProps> = ({ node, docPath }) =
       return <HtmlBlock node={node} />;
     case "footnoteDefinition":
       return <FootnoteBlock node={node} docPath={docPath} />;
+    case "blockMath":
+      return <BlockMath node={node} />;
     default:
       return null;
   }

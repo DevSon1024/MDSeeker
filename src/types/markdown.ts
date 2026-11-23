@@ -111,6 +111,11 @@ export interface FootnoteReferenceInline {
   label: string;
 }
 
+export interface InlineMathInline {
+  type: "inlineMath";
+  math: string;
+}
+
 export type InlineNode =
   | TextInline
   | EmphasisInline
@@ -122,7 +127,8 @@ export type InlineNode =
   | SoftBreakInline
   | HardBreakInline
   | InlineHtmlInline
-  | FootnoteReferenceInline;
+  | FootnoteReferenceInline
+  | InlineMathInline;
 
 /* -------------------------------------------------------------------------- */
 /*                                 Block Nodes                                */
@@ -182,6 +188,11 @@ export interface FootnoteDefinitionBlock {
   content: BlockNode[];
 }
 
+export interface BlockMathBlock {
+  type: "blockMath";
+  math: string;
+}
+
 export type BlockNode =
   | HeadingBlock
   | ParagraphBlock
@@ -191,7 +202,27 @@ export type BlockNode =
   | ThematicBreakBlock
   | TableBlock
   | HtmlBlock
-  | FootnoteDefinitionBlock;
+  | FootnoteDefinitionBlock
+  | BlockMathBlock;
+
+/* -------------------------------------------------------------------------- */
+/*                        Syntax Highlighting Types                           */
+/* -------------------------------------------------------------------------- */
+
+export interface HighlightedToken {
+  content: string;
+  color?: string;
+  fontStyle?: "normal" | "italic" | "bold" | "boldItalic";
+}
+
+export interface HighlightedLine {
+  tokens: HighlightedToken[];
+}
+
+export interface HighlightResult {
+  lines: HighlightedLine[];
+  language: string;
+}
 
 /* -------------------------------------------------------------------------- */
 /*                              Root Document                                 */

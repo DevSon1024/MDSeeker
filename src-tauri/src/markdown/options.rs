@@ -21,6 +21,8 @@ pub struct MarkdownParseOptions {
     pub gfm_admonitions: bool,
     /// Enable YAML/TOML metadata frontmatter blocks.
     pub yaml_metadata: bool,
+    /// Enable mathematical expressions ($...$ and $$...$$).
+    pub math: bool,
 }
 
 impl Default for MarkdownParseOptions {
@@ -34,6 +36,7 @@ impl Default for MarkdownParseOptions {
             smart_punctuation: false,
             gfm_admonitions: true,
             yaml_metadata: true,
+            math: true,
         }
     }
 }
@@ -65,6 +68,9 @@ impl From<&MarkdownParseOptions> for Options {
         if opts.yaml_metadata {
             options.insert(Options::ENABLE_YAML_STYLE_METADATA_BLOCKS);
             options.insert(Options::ENABLE_PLUSES_DELIMITED_METADATA_BLOCKS);
+        }
+        if opts.math {
+            options.insert(Options::ENABLE_MATH);
         }
         options
     }

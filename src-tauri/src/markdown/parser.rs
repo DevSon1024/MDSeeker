@@ -235,10 +235,25 @@ impl MarkdownAstBuilder {
                 Event::End(tag_end) => self.handle_end_tag(tag_end),
                 Event::Text(text) => self.handle_text(&text),
                 Event::Code(code) => self.handle_code(&code),
-                Event::InlineMath(math) | Event::DisplayMath(math) => {
+                Event::InlineMath(math) => {
                     self.ensure_inline_context();
-                    self.append_inline(InlineNode::Code {
-                        code: format!("${}$", math),
+                    self.append_inline(InlineNode::InlineMath {
+                        math: math.to_string(),
+                    });
+                }
+                Event::DisplayMath(math) => {
+                    if self.active_paragraph {
+                        let content = self.finish_inline_stack();
+                        if !content.is_empty() {
+                            self.push_block_to_current(BlockNode::Paragraph { content });
+                        }
+                        self.active_paragraph = false;
+                        self.is_implicit_paragraph = false;
+                    } else {
+                        self.flush_implicit_paragraph();
+                    }
+                    self.push_block_to_current(BlockNode::BlockMath {
+                        math: math.to_string(),
                     });
                 }
                 Event::Html(html) => {
@@ -698,6 +713,11 @@ fn extract_metadata(blocks: &[BlockNode], frontmatter: Option<&str>) -> Document
                         *math = true;
                     }
                 }
+                InlineNode::InlineMath { math: m } => {
+                    *words += m.split_whitespace().count();
+                    *chars += m.chars().count();
+                    *math = true;
+                }
                 InlineNode::Code { code } => {
                     *words += code.split_whitespace().count();
                     *chars += code.chars().count();
@@ -783,9 +803,14 @@ fn extract_metadata(blocks: &[BlockNode], frontmatter: Option<&str>) -> Document
                         );
                     }
                 }
+                BlockNode::BlockMath { math: m } => {
+                    *words += m.split_whitespace().count();
+                    *chars += m.chars().count();
+                    *math = true;
+                }
                 BlockNode::CodeBlock { language, code, .. } => {
                     *code_blocks = true;
-                    if language.as_deref() == Some("mermaid") {
+                    if language.as_deref().map(|l| l.trim().to_lowercase()) == Some("mermaid".to_string()) {
                         *mermaid = true;
                     }
                     *words += code.split_whitespace().count();
@@ -866,6 +891,7 @@ fn inlines_to_plain_text(inlines: &[InlineNode]) -> String {
         match inline {
             InlineNode::Text { value } => out.push_str(value),
             InlineNode::Code { code } => out.push_str(code),
+            InlineNode::InlineMath { math } => out.push_str(math),
             InlineNode::Emphasis { content }
             | InlineNode::Strong { content }
             | InlineNode::Strikethrough { content }

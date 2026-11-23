@@ -56,6 +56,16 @@ pub fn parse_markdown(
     crate::markdown::parse_markdown(&content, options)
 }
 
+/// Highlights source code into structured tokens using syntect.
+#[tauri::command]
+pub fn highlight_code(
+    code: String,
+    language: Option<String>,
+    theme: Option<String>,
+) -> crate::highlighting::HighlightResult {
+    crate::highlighting::highlight_code(&code, language.as_deref(), theme.as_deref())
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -87,5 +97,14 @@ mod tests {
         assert!(!res.is_valid);
         assert!(res.error.is_some());
         assert_eq!(res.error.unwrap().code, "FILE_NOT_FOUND");
+    }
+
+    #[test]
+    fn test_command_highlight_code() {
+        let res = highlight_code("let a = 1;".to_string(), Some("rust".to_string()), Some("dark".to_string()));
+        assert_eq!(res.language, "Rust");
+        assert_eq!(res.lines.len(), 1);
+        let reconstructed: String = res.lines.iter().flat_map(|l| &l.tokens).map(|t| t.content.as_str()).collect();
+        assert_eq!(reconstructed, "let a = 1;");
     }
 }

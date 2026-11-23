@@ -9,6 +9,7 @@ import { LinkNode } from "./inline/LinkNode";
 import { ImageNode } from "./inline/ImageNode";
 import { BreakNode } from "./inline/BreakNode";
 import { InertHtmlNode } from "./inline/InertHtmlNode";
+import { InlineMath } from "./math/InlineMath";
 
 interface MarkdownInlineProps {
   node: InlineNode;
@@ -51,6 +52,8 @@ export const MarkdownInline: React.FC<MarkdownInlineProps> = ({ node, docPath })
           </a>
         </sup>
       );
+    case "inlineMath":
+      return <InlineMath node={node} />;
     default:
       // Graceful fallback for unexpected or future inline variants
       return null;

@@ -351,3 +351,48 @@ fn test_serde_json_serialization_roundtrip() {
         serde_json::from_str(&json_str).expect("deserialization from JSON failed");
     assert_eq!(doc, deserialized);
 }
+
+#[test]
+fn test_parse_inline_and_block_math() {
+    let input = "Einstein said $E = mc^2$ in relativity.\n\n$$\\int_0^1 x^2\\,dx = \\frac{1}{3}$$\n\nAnother equation.";
+    let doc = parse_markdown(input, None).expect("failed to parse math markdown");
+
+    assert!(doc.metadata.has_math, "Document metadata should indicate hasMath is true");
+
+    // Block 0: Paragraph with inline math
+    match &doc.blocks[0] {
+        BlockNode::Paragraph { content } => {
+            let found_inline_math = content.iter().any(|node| match node {
+                InlineNode::InlineMath { math } => math == "E = mc^2",
+                _ => false,
+            });
+            assert!(found_inline_math, "Should contain InlineMath node with 'E = mc^2'");
+        }
+        _ => panic!("Expected paragraph for block 0"),
+    }
+
+    // Block 1: BlockMath
+    match &doc.blocks[1] {
+        BlockNode::BlockMath { math } => {
+            assert!(math.contains("\\int_0^1"));
+        }
+        _ => panic!("Expected BlockMath for block 1"),
+    }
+}
+
+#[test]
+fn test_parse_mermaid_code_block_metadata() {
+    let input = "```mermaid\ngraph TD;\n    A-->B;\n```";
+    let doc = parse_markdown(input, None).expect("failed to parse mermaid");
+
+    assert!(doc.metadata.has_mermaid, "hasMermaid should be true");
+    assert!(doc.metadata.has_code_blocks, "hasCodeBlocks should be true");
+
+    match &doc.blocks[0] {
+        BlockNode::CodeBlock { language, code, .. } => {
+            assert_eq!(language.as_deref(), Some("mermaid"));
+            assert!(code.contains("A-->B"));
+        }
+        _ => panic!("Expected CodeBlock with mermaid language"),
+    }
+}

@@ -1,9 +1,41 @@
-import React, { useState } from "react";
-import { CodeBlock as CodeBlockType } from "@/types/markdown";
+import React, { useState, useEffect } from "react";
+import { CodeBlock as CodeBlockType, HighlightResult } from "@/types/markdown";
 import { Check, Copy } from "lucide-react";
+import { MermaidBlock } from "./MermaidBlock";
+import { highlightCode } from "@/services/highlightService";
+import { useUIStore } from "@/stores/uiStore";
 
 export const CodeBlock: React.FC<{ node: CodeBlockType }> = ({ node }) => {
   const [copied, setCopied] = useState(false);
+  const [highlightResult, setHighlightResult] = useState<HighlightResult | null>(null);
+
+  const { theme } = useUIStore();
+  const isDark =
+    typeof window !== "undefined"
+      ? theme === "dark" ||
+        (theme === "system" && window.matchMedia("(prefers-color-scheme: dark)").matches)
+      : false;
+
+  const rawLanguage = (node.language || "").trim().toLowerCase();
+
+  // If language is mermaid, delegate to dedicated MermaidBlock
+  if (rawLanguage === "mermaid") {
+    return <MermaidBlock code={node.code} />;
+  }
+
+  useEffect(() => {
+    let isMounted = true;
+
+    highlightCode(node.code, node.language, isDark ? "dark" : "light").then((res) => {
+      if (isMounted) {
+        setHighlightResult(res);
+      }
+    });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [node.code, node.language, isDark]);
 
   const handleCopy = async () => {
     try {
@@ -15,7 +47,11 @@ export const CodeBlock: React.FC<{ node: CodeBlockType }> = ({ node }) => {
     }
   };
 
-  const languageLabel = node.language ? node.language.toUpperCase() : "PLAIN TEXT";
+  const languageLabel = highlightResult?.language
+    ? highlightResult.language.toUpperCase()
+    : node.language
+    ? node.language.toUpperCase()
+    : "PLAIN TEXT";
 
   return (
     <div className="my-4 rounded-[var(--fluent-radius-lg)] border border-[var(--fluent-border-card)] bg-[var(--fluent-bg-card)] overflow-hidden shadow-sm">
@@ -47,7 +83,34 @@ export const CodeBlock: React.FC<{ node: CodeBlockType }> = ({ node }) => {
 
       {/* Code Content */}
       <pre className="p-4 overflow-x-auto text-[13px] font-mono leading-normal text-[var(--fluent-text-primary)] select-text">
-        <code className="block whitespace-pre">{node.code}</code>
+        <code className="block whitespace-pre">
+          {highlightResult ? (
+            highlightResult.lines.map((line, lineIdx) => (
+              <span key={lineIdx} className="code-line">
+                {line.tokens.map((token, tokenIdx) => (
+                  <span
+                    key={tokenIdx}
+                    style={{
+                      color: token.color || undefined,
+                      fontStyle:
+                        token.fontStyle === "italic" || token.fontStyle === "boldItalic"
+                          ? "italic"
+                          : undefined,
+                      fontWeight:
+                        token.fontStyle === "bold" || token.fontStyle === "boldItalic"
+                          ? "bold"
+                          : undefined,
+                    }}
+                  >
+                    {token.content}
+                  </span>
+                ))}
+              </span>
+            ))
+          ) : (
+            node.code
+          )}
+        </code>
       </pre>
     </div>
   );

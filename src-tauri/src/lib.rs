@@ -1,9 +1,10 @@
 pub mod commands;
 pub mod file_manager;
+pub mod highlighting;
 pub mod markdown;
 
 pub use commands::{
-    get_app_info, get_file_metadata, parse_markdown, ping, read_markdown_file,
+    get_app_info, get_file_metadata, highlight_code, parse_markdown, ping, read_markdown_file,
     validate_markdown_file,
 };
 
@@ -19,6 +20,7 @@ pub fn run() {
             get_file_metadata,
             validate_markdown_file,
             parse_markdown,
+            highlight_code,
         ])
         .run(tauri::generate_context!())
         .expect("error while running MDSeeker application");

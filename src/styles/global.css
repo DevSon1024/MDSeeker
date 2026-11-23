@@ -1,6 +1,7 @@
 @import "./fluent-tokens.css";
 @import "./themes.css";
 @import "./components.css";
+@import "katex/dist/katex.min.css";
 
 /* Global Base Styles */
 html,

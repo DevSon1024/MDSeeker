@@ -88,6 +88,10 @@ pub enum BlockNode {
         label: String,
         content: Vec<BlockNode>,
     },
+    /// Block-level mathematical expression ($$...$$).
+    BlockMath {
+        math: String,
+    },
 }
 
 /// An individual item within a list.
@@ -172,5 +176,9 @@ pub enum InlineNode {
     /// Reference to a footnote definition.
     FootnoteReference {
         label: String,
+    },
+    /// Inline LaTeX mathematical expression ($...$).
+    InlineMath {
+        math: String,
     },
 }
