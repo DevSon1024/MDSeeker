@@ -10,6 +10,7 @@ export const LinkNode: React.FC<{ node: LinkInline; docPath?: string }> = ({
 }) => {
   const safe = isSafeUrl(node.url);
   const isExternal = node.url.startsWith("http://") || node.url.startsWith("https://");
+  const hasImage = node.content.some((c) => c.type === "image");
 
   if (!safe) {
     // Unsafe URLs (e.g. javascript:) render as disabled/inert text
@@ -37,7 +38,7 @@ export const LinkNode: React.FC<{ node: LinkInline; docPath?: string }> = ({
           <MarkdownInline key={idx} node={child} docPath={docPath} />
         ))}
       </span>
-      {isExternal && <ExternalLink className="w-3 h-3 opacity-70 inline flex-shrink-0" />}
+      {isExternal && !hasImage && <ExternalLink className="w-3 h-3 opacity-70 inline flex-shrink-0" />}
     </a>
   );
 };

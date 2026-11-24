@@ -3,6 +3,7 @@
   "private": true,
   "version": "0.1.1",
   "description": "MDSeeker - Lightweight Windows-first Markdown Viewer",
+  "license": "MIT",
   "type": "module",
   "scripts": {
     "dev": "vite",

@@ -103,14 +103,8 @@ export default function App() {
   // Keyboard Shortcuts Handler
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Do not intercept if user is typing inside an input or textarea
-      if (
-        e.target instanceof HTMLInputElement ||
-        e.target instanceof HTMLTextAreaElement ||
-        (e.target as HTMLElement)?.isContentEditable
-      ) {
-        return;
-      }
+      const isCtrlOrMeta = e.ctrlKey || e.metaKey;
+      const key = e.key.toLowerCase();
 
       // Alt+F4: Close MDSeeker application window
       if (e.altKey && (e.key === "F4" || e.code === "F4")) {
@@ -119,9 +113,49 @@ export default function App() {
         return;
       }
 
-      if (e.ctrlKey || e.metaKey) {
-        const key = e.key.toLowerCase();
+      // Global Ctrl+F / Cmd+F: Toggle in-document or editor search
+      if (isCtrlOrMeta && (key === "f" || e.code === "KeyF")) {
+        e.preventDefault();
+        toggleSearch();
+        return;
+      }
 
+      // Escape: Close search bar if open
+      if (e.key === "Escape") {
+        if (useUIStore.getState().isSearchOpen) {
+          e.preventDefault();
+          toggleSearch();
+          return;
+        }
+      }
+
+      // View Mode Shortcuts: Alt+1 / Ctrl+Alt+1 (Reading), Alt+2 / Ctrl+Alt+2 (Source), Alt+3 / Ctrl+Alt+3 (Split)
+      if (e.altKey && (key === "1" || key === "2" || key === "3")) {
+        e.preventDefault();
+        if (key === "1") setViewMode("reading");
+        else if (key === "2") setViewMode("source");
+        else if (key === "3") setViewMode("split");
+        return;
+      }
+
+      // Cycle View Mode: Ctrl+E
+      if (isCtrlOrMeta && !e.shiftKey && !e.altKey && (key === "e" || e.code === "KeyE")) {
+        e.preventDefault();
+        const currentMode = useUIStore.getState().viewMode;
+        const nextMode = currentMode === "reading" ? "source" : currentMode === "source" ? "split" : "reading";
+        setViewMode(nextMode);
+        return;
+      }
+
+      // Do not intercept standard typing if user is in an input or textarea
+      if (
+        e.target instanceof HTMLInputElement ||
+        e.target instanceof HTMLTextAreaElement
+      ) {
+        return;
+      }
+
+      if (isCtrlOrMeta) {
         // Shift modifier combinations
         if (e.shiftKey) {
           if (key === "tab") {
@@ -140,6 +174,10 @@ export default function App() {
           } else if (key === "o") {
             e.preventDefault();
             toggleSidebar();
+          } else if (key === "v") {
+            e.preventDefault();
+            const currentMode = useUIStore.getState().viewMode;
+            setViewMode(currentMode === "reading" ? "source" : "reading");
           }
           return;
         }
@@ -174,9 +212,6 @@ export default function App() {
         } else if (key === "b") {
           e.preventDefault();
           toggleSidebar();
-        } else if (key === "f") {
-          e.preventDefault();
-          toggleSearch();
         }
       }
     };

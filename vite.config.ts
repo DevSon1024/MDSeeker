@@ -42,4 +42,9 @@ export default defineConfig(() => ({
       ignored: ["**/src-tauri/**"],
     },
   },
+
+  build: {
+    // Desktop application loads from local disk without network latency; expand chunk limit to 2000 kB
+    chunkSizeWarningLimit: 2000,
+  },
 }));

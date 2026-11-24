@@ -1,6 +1,10 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import { isSafeUrl } from "./linkSafety";
 import { isSafeImageUrl, resolveImageUrl } from "./imageSafety";
+
+vi.mock("@tauri-apps/api/core", () => ({
+  convertFileSrc: vi.fn((path: string) => `asset://localhost/${encodeURIComponent(path)}`),
+}));
 
 describe("linkSafety", () => {
   it("allows standard safe web protocols and mailto", () => {
@@ -42,5 +46,23 @@ describe("imageSafety", () => {
 
   it("resolves external images directly", () => {
     expect(resolveImageUrl("https://example.com/pic.png")).toBe("https://example.com/pic.png");
+  });
+
+  it("resolves relative paths with spaces, URL-encoding, and query parameters", () => {
+    const docPath = "D:/Projects/Nosved-Player/README.md";
+    // With spaces
+    const resolvedSpace = resolveImageUrl("Screenshots/NosvedPlayer Logo.png", docPath);
+    expect(resolvedSpace).toContain("asset://localhost/");
+    expect(resolvedSpace).toContain("NosvedPlayer%20Logo.png");
+
+    // With URL encoded space
+    const resolvedEncoded = resolveImageUrl("Screenshots/NosvedPlayer%20Logo.png", docPath);
+    expect(resolvedEncoded).toContain("asset://localhost/");
+    expect(resolvedEncoded).toContain("NosvedPlayer%20Logo.png");
+
+    // With query parameter (query stripped from path)
+    const resolvedQuery = resolveImageUrl("Screenshots/Logo.png?raw=true", docPath);
+    expect(resolvedQuery).toContain("Logo.png");
+    expect(resolvedQuery).not.toContain("raw=true");
   });
 });

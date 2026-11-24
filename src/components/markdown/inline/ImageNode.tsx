@@ -23,14 +23,14 @@ export const ImageNode: React.FC<{ node: ImageInline; docPath?: string }> = ({
   }
 
   return (
-    <span className="my-3 inline-block max-w-full">
+    <span className="my-1 inline-block max-w-full align-middle">
       <img
         src={resolvedSrc}
         alt={node.alt}
         title={node.title ?? undefined}
         onError={() => setHasError(true)}
         loading="lazy"
-        className="max-w-full h-auto rounded-[var(--fluent-radius-md)] border border-[var(--fluent-border-card)] shadow-sm object-contain max-h-[520px]"
+        className="max-w-full h-auto rounded-[var(--fluent-radius-md)] border border-[var(--fluent-border-card)] shadow-xs object-contain max-h-[520px] inline-block"
       />
       {node.title && (
         <span className="block text-center text-[11px] text-[var(--fluent-text-tertiary)] italic mt-1">

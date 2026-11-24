@@ -46,6 +46,13 @@ const DOMPurify =
  * Allowed HTML tags in Markdown documents (Sections 2 & 4).
  */
 export const ALLOWED_TAGS = [
+  // Headings
+  "h1",
+  "h2",
+  "h3",
+  "h4",
+  "h5",
+  "h6",
   // Text and formatting
   "p",
   "span",
@@ -66,6 +73,7 @@ export const ALLOWED_TAGS = [
   "abbr",
   "q",
   "cite",
+  "blockquote",
   // Layout
   "div",
   "br",
@@ -75,13 +83,22 @@ export const ALLOWED_TAGS = [
   "article",
   "header",
   "footer",
+  "aside",
+  "nav",
+  "figure",
+  "figcaption",
   // Images and links
   "img",
+  "picture",
+  "source",
   "a",
   // Lists
   "ul",
   "ol",
   "li",
+  "dl",
+  "dt",
+  "dd",
   // Tables
   "table",
   "thead",
@@ -102,6 +119,7 @@ export const ALLOWED_TAGS = [
  */
 export const ALLOWED_ATTR = [
   "align",
+  "valign",
   "width",
   "height",
   "alt",
@@ -119,6 +137,12 @@ export const ALLOWED_ATTR = [
   "rel",
   "class",
   "id",
+  "loading",
+  "decoding",
+  "cellspacing",
+  "cellpadding",
+  "border",
+  "nowrap",
 ];
 
 /**
@@ -162,6 +186,11 @@ export const ALLOWED_CSS_PROPERTIES = new Set([
   "float",
   "clear",
   "opacity",
+  "white-space",
+  "table-layout",
+  "box-sizing",
+  "object-fit",
+  "object-position",
 ]);
 
 /**

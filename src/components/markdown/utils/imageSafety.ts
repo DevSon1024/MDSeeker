@@ -24,17 +24,40 @@ export function resolveImageUrl(src: string, documentCanonicalPath?: string): st
     return trimmed;
   }
 
+  // Decode URI percent-encoding (e.g. %20 -> space) if present
+  let cleanPath = trimmed;
+  try {
+    cleanPath = decodeURIComponent(trimmed);
+  } catch {
+    // Keep trimmed if decoding fails
+  }
+
+  // Strip query parameters and hash anchors (e.g. ?raw=true or #gh-dark-mode-only)
+  const qIdx = cleanPath.search(/[?#]/);
+  if (qIdx !== -1) {
+    cleanPath = cleanPath.substring(0, qIdx);
+  }
+
+  // Absolute Windows paths (e.g., C:\images\pic.png or D:/images/pic.png)
+  if (/^[a-zA-Z]:[\\\/]/.test(cleanPath)) {
+    try {
+      return convertFileSrc(cleanPath);
+    } catch {
+      return cleanPath;
+    }
+  }
+
   // Local relative images resolved against document canonical directory
-  if (documentCanonicalPath && (trimmed.startsWith("./") || trimmed.startsWith("../") || !trimmed.includes("://"))) {
+  if (documentCanonicalPath && (cleanPath.startsWith("./") || cleanPath.startsWith("../") || !cleanPath.includes("://"))) {
     try {
       const normalizedDocPath = documentCanonicalPath.replace(/\\/g, "/");
       const lastSlash = normalizedDocPath.lastIndexOf("/");
       const docDir = lastSlash !== -1 ? normalizedDocPath.slice(0, lastSlash) : "";
 
       if (docDir) {
-        // Prevent escaping root directory
-        const cleanRelPath = trimmed.replace(/^\.\//, "");
-        const fullLocalPath = `${docDir}/${cleanRelPath}`;
+        // Normalize relative path
+        const rel = cleanPath.replace(/^\.\//, "").replace(/^\/+/, "");
+        const fullLocalPath = `${docDir}/${rel}`;
         return convertFileSrc(fullLocalPath);
       }
     } catch {

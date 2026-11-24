@@ -44,7 +44,7 @@ export const HtmlBlock: React.FC<HtmlBlockProps> = ({ node, docPath }) => {
 
   return (
     <div
-      className="mdseeker-html-block my-2 overflow-x-auto text-[var(--fluent-text-primary)]"
+      className="mdseeker-html-block my-1 text-[var(--fluent-text-primary)]"
       dangerouslySetInnerHTML={{ __html: sanitized }}
       onClick={handleClick}
       onErrorCapture={handleImageError}
