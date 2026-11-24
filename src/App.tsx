@@ -5,6 +5,7 @@ import { useDocumentStore } from "@/stores/documentStore";
 import { useSettingsStore } from "@/stores/settingsStore";
 import { useRecentFilesStore } from "@/stores/recentFilesStore";
 import { loadSavedSession, flushPendingSettings } from "@/services/settingsService";
+import { closeApplicationWindow } from "@/services/windowService";
 import { TitleBar } from "@/components/window/TitleBar";
 import { TabBar } from "@/components/tabs/TabBar";
 import { ReaderToolbar } from "@/components/toolbar/ReaderToolbar";
@@ -89,6 +90,13 @@ export default function App() {
         e.target instanceof HTMLTextAreaElement ||
         (e.target as HTMLElement)?.isContentEditable
       ) {
+        return;
+      }
+
+      // Alt+F4: Close MDSeeker application window
+      if (e.altKey && (e.key === "F4" || e.code === "F4")) {
+        e.preventDefault();
+        closeApplicationWindow();
         return;
       }
 

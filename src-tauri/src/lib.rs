@@ -5,8 +5,9 @@ pub mod markdown;
 pub mod windows_integration;
 
 pub use commands::{
-    get_app_info, get_file_metadata, get_pending_files, highlight_code, parse_markdown,
-    peek_pending_files, ping, read_markdown_file, reveal_in_explorer, validate_markdown_file,
+    close_window, get_app_info, get_file_metadata, get_pending_files, highlight_code,
+    is_default_app_registered, open_default_apps_settings, parse_markdown, peek_pending_files,
+    ping, read_markdown_file, register_default_app, reveal_in_explorer, validate_markdown_file,
 };
 pub use windows_integration::{process_incoming_args, IncomingFileQueue};
 
@@ -60,6 +61,10 @@ pub fn run() {
         }))
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_dialog::init())
+        .setup(|_app| {
+            windows_integration::ensure_windows_default_app_registered();
+            Ok(())
+        })
         .manage(queue)
         .invoke_handler(tauri::generate_handler![
             get_app_info,
@@ -72,6 +77,10 @@ pub fn run() {
             reveal_in_explorer,
             get_pending_files,
             peek_pending_files,
+            register_default_app,
+            is_default_app_registered,
+            open_default_apps_settings,
+            close_window,
         ])
         .run(tauri::generate_context!())
         .expect("error while running MDSeeker application");

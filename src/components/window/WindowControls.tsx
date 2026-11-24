@@ -1,6 +1,7 @@
 import React, { useEffect } from "react";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { useUIStore } from "@/stores/uiStore";
+import { closeApplicationWindow } from "@/services/windowService";
 
 // Windows 11 style SVG icons for window buttons
 function MinimizeIcon() {
@@ -71,6 +72,7 @@ export function WindowControls() {
 
   const handleMinimize = async (e: React.MouseEvent) => {
     e.stopPropagation();
+    e.preventDefault();
     try {
       const appWindow = getCurrentWindow();
       await appWindow.minimize();
@@ -81,6 +83,7 @@ export function WindowControls() {
 
   const handleToggleMaximize = async (e: React.MouseEvent) => {
     e.stopPropagation();
+    e.preventDefault();
     try {
       const appWindow = getCurrentWindow();
       await appWindow.toggleMaximize();
@@ -94,19 +97,30 @@ export function WindowControls() {
 
   const handleClose = async (e: React.MouseEvent) => {
     e.stopPropagation();
+    e.preventDefault();
     try {
-      const appWindow = getCurrentWindow();
-      await appWindow.close();
+      await closeApplicationWindow();
     } catch (err) {
-      console.warn("Close window called outside Tauri environment", err);
+      console.warn("Close window failed", err);
     }
   };
 
+  const preventDoubleClickBubble = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+  };
+
   return (
-    <div className="flex items-center h-full tauri-no-drag">
+    <div
+      className="flex items-center h-full tauri-no-drag"
+      data-tauri-drag-region="false"
+      onDoubleClick={preventDoubleClickBubble}
+    >
       <button
         type="button"
         onClick={handleMinimize}
+        onMouseDown={(e) => e.stopPropagation()}
+        onDoubleClick={preventDoubleClickBubble}
         aria-label="Minimize"
         title="Minimize"
         className="fluent-window-btn"
@@ -117,6 +131,8 @@ export function WindowControls() {
       <button
         type="button"
         onClick={handleToggleMaximize}
+        onMouseDown={(e) => e.stopPropagation()}
+        onDoubleClick={preventDoubleClickBubble}
         aria-label={isMaximized ? "Restore Down" : "Maximize"}
         title={isMaximized ? "Restore Down" : "Maximize"}
         className="fluent-window-btn"
@@ -127,6 +143,8 @@ export function WindowControls() {
       <button
         type="button"
         onClick={handleClose}
+        onMouseDown={(e) => e.stopPropagation()}
+        onDoubleClick={preventDoubleClickBubble}
         aria-label="Close"
         title="Close"
         className="fluent-window-btn fluent-window-btn-close"

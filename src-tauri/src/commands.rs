@@ -109,6 +109,32 @@ pub fn peek_pending_files(
     state.peek_all()
 }
 
+/// Registers MDSeeker as a default application in the Windows registry for .md and .markdown.
+#[tauri::command]
+pub fn register_default_app() -> Result<(), String> {
+    crate::windows_integration::register_windows_default_app()
+}
+
+/// Checks whether MDSeeker is registered as a handler in the Windows registry.
+#[tauri::command]
+pub fn is_default_app_registered() -> Result<bool, String> {
+    Ok(crate::windows_integration::is_windows_default_app_registered())
+}
+
+/// Launches the Windows Default Apps system settings page (ms-settings:defaultapps).
+#[tauri::command]
+pub fn open_default_apps_settings() -> Result<(), String> {
+    crate::windows_integration::open_windows_default_apps_settings()
+}
+
+/// Closes and destroys the current application window reliably from the backend.
+#[tauri::command]
+pub fn close_window(window: tauri::Window) -> Result<(), String> {
+    window
+        .destroy()
+        .map_err(|e| format!("Failed to close window: {}", e))
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -165,5 +191,11 @@ mod tests {
         let res = reveal_in_explorer("C:/nonexistent_file_xyz_123.md".to_string());
         assert!(res.is_err());
         assert!(res.unwrap_err().contains("Cannot reveal file"));
+    }
+
+    #[test]
+    fn test_command_is_default_app_registered() {
+        let res = is_default_app_registered();
+        assert!(res.is_ok());
     }
 }
