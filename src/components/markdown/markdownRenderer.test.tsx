@@ -351,7 +351,7 @@ describe("MarkdownReader Components", () => {
     expect(screen.getByText("100")).toBeDefined();
   });
 
-  it("renders inert HTML blocks without executing them", () => {
+  it("renders sanitized HTML blocks without executing scripts", () => {
     const doc: MarkdownDocument = {
       blocks: [
         {
@@ -375,11 +375,10 @@ describe("MarkdownReader Components", () => {
       parserVersion: "pulldown-cmark-0.13",
     };
 
-    render(<MarkdownReader document={doc} />);
+    const { container } = render(<MarkdownReader document={doc} />);
 
-    expect(
-      screen.getByText('<div class="alert"><script>evil()</script>Sample text</div>')
-    ).toBeDefined();
+    expect(screen.getByText("Sample text")).toBeDefined();
+    expect(container.querySelector("script")).toBeNull();
   });
 
   it("renders footnotes definitions and references", () => {

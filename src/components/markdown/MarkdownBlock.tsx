@@ -36,7 +36,7 @@ export const MarkdownBlock: React.FC<MarkdownBlockProps> = ({ node, docPath }) =
     case "thematicBreak":
       return <ThematicBreakBlock />;
     case "htmlBlock":
-      return <HtmlBlock node={node} />;
+      return <HtmlBlock node={node} docPath={docPath} />;
     case "footnoteDefinition":
       return <FootnoteBlock node={node} docPath={docPath} />;
     case "blockMath":

@@ -39,7 +39,7 @@ export const MarkdownInline: React.FC<MarkdownInlineProps> = ({ node, docPath })
     case "hardBreak":
       return <BreakNode node={node} />;
     case "inlineHtml":
-      return <InertHtmlNode node={node} />;
+      return <InertHtmlNode node={node} docPath={docPath} />;
     case "footnoteReference":
       return (
         <sup className="px-0.5 font-mono text-[10px] select-none">

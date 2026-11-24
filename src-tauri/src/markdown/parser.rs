@@ -72,6 +72,7 @@ struct MarkdownAstBuilder {
     active_code_block: Option<(Option<String>, bool, String)>,
     active_table: Option<ActiveTable>,
     active_metadata_block: Option<String>,
+    active_html_block: Option<String>,
     frontmatter: Option<String>,
 }
 
@@ -86,23 +87,35 @@ impl MarkdownAstBuilder {
             active_code_block: None,
             active_table: None,
             active_metadata_block: None,
+            active_html_block: None,
             frontmatter: None,
         }
     }
 
     fn push_block_to_current(&mut self, block: BlockNode) {
         if let Some(top) = self.block_stack.last_mut() {
-            match top {
-                BlockContainer::Root(children) => children.push(block),
-                BlockContainer::Blockquote { children, .. } => children.push(block),
-                BlockContainer::ListItem { children, .. } => children.push(block),
-                BlockContainer::FootnoteDefinition { children, .. } => children.push(block),
-                BlockContainer::List { items, .. } => {
-                    items.push(ListItem {
-                        checked: None,
-                        content: vec![block],
-                    });
+            let children = match top {
+                BlockContainer::Root(c) => Some(c),
+                BlockContainer::Blockquote { children, .. } => Some(children),
+                BlockContainer::ListItem { children, .. } => Some(children),
+                BlockContainer::FootnoteDefinition { children, .. } => Some(children),
+                BlockContainer::List { .. } => None,
+            };
+
+            if let Some(children) = children {
+                if let BlockNode::HtmlBlock { content: new_html } = &block {
+                    if let Some(BlockNode::HtmlBlock { content: prev_html }) = children.last_mut() {
+                        prev_html.push('\n');
+                        prev_html.push_str(new_html);
+                        return;
+                    }
                 }
+                children.push(block);
+            } else if let BlockContainer::List { items, .. } = top {
+                items.push(ListItem {
+                    checked: None,
+                    content: vec![block],
+                });
             }
         }
     }
@@ -124,6 +137,7 @@ impl MarkdownAstBuilder {
             && self.active_table.is_none()
             && self.active_code_block.is_none()
             && self.active_metadata_block.is_none()
+            && self.active_html_block.is_none()
         {
             self.active_paragraph = true;
             self.is_implicit_paragraph = true;
@@ -257,10 +271,14 @@ impl MarkdownAstBuilder {
                     });
                 }
                 Event::Html(html) => {
-                    self.flush_implicit_paragraph();
-                    self.push_block_to_current(BlockNode::HtmlBlock {
-                        content: html.to_string(),
-                    });
+                    if let Some(buf) = self.active_html_block.as_mut() {
+                        buf.push_str(&html);
+                    } else {
+                        self.flush_implicit_paragraph();
+                        self.push_block_to_current(BlockNode::HtmlBlock {
+                            content: html.to_string(),
+                        });
+                    }
                 }
                 Event::InlineHtml(html) => {
                     self.ensure_inline_context();
@@ -433,6 +451,10 @@ impl MarkdownAstBuilder {
                 ) {
                     self.active_metadata_block = Some(String::new());
                 }
+            }
+            Tag::HtmlBlock => {
+                self.flush_implicit_paragraph();
+                self.active_html_block = Some(String::new());
             }
             Tag::Emphasis => {
                 self.ensure_inline_context();
@@ -636,6 +658,14 @@ impl MarkdownAstBuilder {
                     });
                 }
             }
+            TagEnd::HtmlBlock => {
+                if let Some(content) = self.active_html_block.take() {
+                    let trimmed = content.trim();
+                    if !trimmed.is_empty() {
+                        self.push_block_to_current(BlockNode::HtmlBlock { content });
+                    }
+                }
+            }
             _ => {}
         }
     }
@@ -645,6 +675,8 @@ impl MarkdownAstBuilder {
             code.push_str(text);
         } else if let Some(meta) = self.active_metadata_block.as_mut() {
             meta.push_str(text);
+        } else if let Some(html) = self.active_html_block.as_mut() {
+            html.push_str(text);
         } else {
             self.ensure_inline_context();
             if let Some(InlineFrame::Image { alt_parts, .. }) = self.inline_stack.last_mut() {

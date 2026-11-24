@@ -291,6 +291,32 @@ fn test_parse_thematic_break_and_html_inert() {
 }
 
 #[test]
+fn test_mixed_html_and_markdown_events() {
+    let input = r#"# Project Title
+
+<div align="center">
+
+  <img src="Screenshots/logo.png" width="160" />
+
+  <p><strong>Project description</strong></p>
+
+</div>
+
+## Features
+
+- Feature one
+- Feature two
+
+<p align="center">
+  <strong>Built with Kotlin</strong>
+</p>"#;
+    let doc = parse_markdown(input, None).expect("failed to parse mixed");
+    for (i, b) in doc.blocks.iter().enumerate() {
+        println!("Block {}: {:?}", i, b);
+    }
+}
+
+#[test]
 fn test_parse_footnotes() {
     let input =
         "Here is a statement with a footnote[^1].\n\n[^1]: This is the footnote definition.";

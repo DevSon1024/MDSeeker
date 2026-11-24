@@ -175,3 +175,119 @@
 ::-webkit-scrollbar-thumb:hover {
   background: var(--fluent-scrollbar-thumb-hover);
 }
+
+/* Rendered HTML Support (Safe Markdown README Elements) */
+.mdseeker-html-block {
+  width: 100%;
+}
+
+.mdseeker-html-inline {
+  display: inline;
+}
+
+.mdseeker-html-img {
+  max-width: 100%;
+  height: auto;
+  border-radius: var(--fluent-radius-md);
+  vertical-align: middle;
+}
+
+.mdseeker-html-img.mdseeker-html-img-error {
+  min-width: 48px;
+  min-height: 48px;
+  background-color: var(--fluent-bg-subtle-hover);
+  border: 1px dashed var(--fluent-border-card);
+  position: relative;
+}
+
+.mdseeker-html-link {
+  color: var(--fluent-accent);
+  text-decoration: none;
+  font-weight: 500;
+  transition: color var(--fluent-transition-fast);
+}
+
+.mdseeker-html-link:hover {
+  text-decoration: underline;
+  color: var(--fluent-accent-hover);
+}
+
+.mdseeker-html-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1rem 0;
+  font-size: 13px;
+  border-radius: var(--fluent-radius-lg);
+  border: 1px solid var(--fluent-border-card);
+  background-color: var(--fluent-bg-card);
+  overflow: hidden;
+}
+
+.mdseeker-html-table th {
+  background-color: var(--fluent-bg-subtle-hover);
+  padding: 8px 16px;
+  font-weight: 600;
+  text-align: inherit;
+  border-bottom: 1px solid var(--fluent-border-card);
+}
+
+.mdseeker-html-table td {
+  padding: 8px 16px;
+  border-bottom: 1px solid var(--fluent-border-subtle);
+}
+
+.mdseeker-html-table tr:last-child td {
+  border-bottom: none;
+}
+
+.mdseeker-html-table tr:hover {
+  background-color: var(--fluent-bg-subtle-hover);
+}
+
+.mdseeker-html-details {
+  margin: 1rem 0;
+  padding: 10px 14px;
+  border-radius: var(--fluent-radius-md);
+  border: 1px solid var(--fluent-border-card);
+  background-color: var(--fluent-bg-card);
+  transition: border-color var(--fluent-transition-fast);
+}
+
+.mdseeker-html-details > summary {
+  font-weight: 600;
+  font-size: 13px;
+  cursor: pointer;
+  padding: 4px 0;
+  user-select: none;
+  color: var(--fluent-text-primary);
+  outline: none;
+}
+
+.mdseeker-html-details > summary:hover {
+  color: var(--fluent-accent);
+}
+
+.mdseeker-html-details[open] > summary {
+  margin-bottom: 8px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--fluent-border-subtle);
+}
+
+.mdseeker-details-content {
+  margin-top: 8px;
+}
+
+kbd,
+.mdseeker-html-kbd {
+  display: inline-block;
+  padding: 2px 6px;
+  font-size: 11px;
+  font-family: var(--fluent-font-mono, monospace);
+  line-height: 1.2;
+  color: var(--fluent-text-primary);
+  background-color: var(--fluent-bg-subtle-hover);
+  border: 1px solid var(--fluent-border-subtle);
+  border-radius: var(--fluent-radius-sm);
+  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.08);
+}
+
