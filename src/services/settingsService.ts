@@ -197,6 +197,26 @@ export function loadPersistedSettings(): AppSettings {
 }
 
 let saveTimeout: ReturnType<typeof setTimeout> | null = null;
+let pendingSettingsToFlush: AppSettings | null = null;
+
+/**
+ * Synchronously flushes any pending debounced settings writes to storage.
+ * Useful before window close or during test teardown.
+ */
+export function flushPendingSettings(): void {
+  if (saveTimeout) {
+    clearTimeout(saveTimeout);
+    saveTimeout = null;
+  }
+  if (pendingSettingsToFlush && typeof localStorage !== "undefined") {
+    try {
+      localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(pendingSettingsToFlush));
+    } catch (err) {
+      console.warn("Failed to flush settings:", err);
+    }
+    pendingSettingsToFlush = null;
+  }
+}
 
 /**
  * Debounced persistence of settings to local storage.
@@ -204,25 +224,18 @@ let saveTimeout: ReturnType<typeof setTimeout> | null = null;
 export function persistSettings(settings: AppSettings, immediate = false): void {
   if (typeof localStorage === "undefined") return;
 
-  const save = () => {
-    try {
-      localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(settings));
-    } catch (err) {
-      console.warn("Failed to persist settings:", err);
-    }
-  };
+  pendingSettingsToFlush = settings;
 
   if (immediate) {
-    if (saveTimeout) {
-      clearTimeout(saveTimeout);
-      saveTimeout = null;
-    }
-    save();
+    flushPendingSettings();
   } else {
     if (saveTimeout) {
       clearTimeout(saveTimeout);
     }
-    saveTimeout = setTimeout(save, 100);
+    saveTimeout = setTimeout(() => {
+      saveTimeout = null;
+      flushPendingSettings();
+    }, 100);
   }
 }
 

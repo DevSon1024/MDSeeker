@@ -4,7 +4,7 @@ import { useUIStore } from "@/stores/uiStore";
 import { useDocumentStore } from "@/stores/documentStore";
 import { useSettingsStore } from "@/stores/settingsStore";
 import { useRecentFilesStore } from "@/stores/recentFilesStore";
-import { loadSavedSession } from "@/services/settingsService";
+import { loadSavedSession, flushPendingSettings } from "@/services/settingsService";
 import { TitleBar } from "@/components/window/TitleBar";
 import { TabBar } from "@/components/tabs/TabBar";
 import { ReaderToolbar } from "@/components/toolbar/ReaderToolbar";
@@ -32,38 +32,19 @@ export default function App() {
     setIsDraggingOver,
   } = useDocumentStore();
 
-  // Initialize theme, settings, and recent files on mount
+  // Initialize theme, settings, and recent files on mount, and handle window flush
   useEffect(() => {
     initTheme();
     initSettings();
     initRecentFiles();
-  }, [initTheme, initSettings, initRecentFiles]);
 
-  // Session restoration on startup if enabled
-  useEffect(() => {
-    const { behavior } = useSettingsStore.getState().settings;
-    if (behavior.restoreLastSession) {
-      const session = loadSavedSession();
-      if (session && Array.isArray(session.openPaths) && session.openPaths.length > 0) {
-        if (useDocumentStore.getState().documents.length === 0) {
-          (async () => {
-            for (const path of session.openPaths) {
-              await loadDocumentByPath(path);
-            }
-            if (session.activePath) {
-              const matched = useDocumentStore.getState().findDocumentByPath(session.activePath);
-              if (matched) {
-                useDocumentStore.getState().setActiveDocument(matched.id);
-              }
-            }
-            if (session.viewMode) {
-              useUIStore.getState().setViewMode(session.viewMode);
-            }
-          })();
-        }
-      }
-    }
-  }, [loadDocumentByPath]);
+    const handleBeforeUnload = () => {
+      flushPendingSettings();
+    };
+
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+  }, [initTheme, initSettings, initRecentFiles]);
 
   // Window close confirmation when multiple tabs are open
   useEffect(() => {
@@ -73,6 +54,7 @@ export default function App() {
       try {
         const appWindow = getCurrentWindow();
         unlistenClose = await appWindow.onCloseRequested((event) => {
+          flushPendingSettings();
           const currentDocs = useDocumentStore.getState().documents;
           const { behavior } = useSettingsStore.getState().settings;
           if (behavior.confirmCloseWithMultipleTabs && currentDocs.length > 1) {
@@ -258,20 +240,54 @@ export default function App() {
     let unlisten: (() => void) | undefined;
     let isCancelled = false;
 
-    async function setupIncomingFiles() {
+    async function coordinateStartupAndIncomingFiles() {
+      let incomingFilesReceived = false;
+
       try {
         unlisten = await initIncomingFileService(async (filePaths) => {
           if (isCancelled) return;
-          for (const path of filePaths) {
-            await loadDocumentByPath(path);
+          if (filePaths.length > 0) {
+            incomingFilesReceived = true;
+            for (const path of filePaths) {
+              await loadDocumentByPath(path);
+            }
           }
         });
       } catch (err) {
         console.error("Failed to setup incoming files:", err);
       }
+
+      // Incoming Windows file paths take strict precedence over restored session state
+      if (!incomingFilesReceived && !isCancelled) {
+        const { behavior } = useSettingsStore.getState().settings;
+        if (behavior.restoreLastSession) {
+          const session = loadSavedSession();
+          if (session && Array.isArray(session.openPaths) && session.openPaths.length > 0) {
+            if (useDocumentStore.getState().documents.length === 0) {
+              for (const path of session.openPaths) {
+                if (isCancelled) return;
+                try {
+                  await loadDocumentByPath(path);
+                } catch {
+                  // Tolerate deleted or relocated files without breaking restoration of other tabs
+                }
+              }
+              if (session.activePath && !isCancelled) {
+                const matched = useDocumentStore.getState().findDocumentByPath(session.activePath);
+                if (matched) {
+                  useDocumentStore.getState().setActiveDocument(matched.id);
+                }
+              }
+              if (session.viewMode && !isCancelled) {
+                useUIStore.getState().setViewMode(session.viewMode);
+              }
+            }
+          }
+        }
+      }
     }
 
-    setupIncomingFiles();
+    coordinateStartupAndIncomingFiles();
 
     return () => {
       isCancelled = true;

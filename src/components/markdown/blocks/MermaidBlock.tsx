@@ -57,6 +57,19 @@ export const MermaidBlock: React.FC<MermaidBlockProps> = ({ code }) => {
         const msg = err instanceof Error ? err.message : String(err);
         setError(msg);
         setSvgHtml(null);
+
+        // Clean up any temporary or residual DOM elements inserted by mermaid into document.body
+        try {
+          const residualIds = [diagramId, `d${diagramId}`];
+          for (const id of residualIds) {
+            const el = document.getElementById(id);
+            if (el && el.parentNode) {
+              el.parentNode.removeChild(el);
+            }
+          }
+        } catch {
+          // Ignore DOM cleanup errors
+        }
       } finally {
         if (isMounted) {
           setIsLoading(false);
@@ -68,6 +81,17 @@ export const MermaidBlock: React.FC<MermaidBlockProps> = ({ code }) => {
 
     return () => {
       isMounted = false;
+      try {
+        const residualIds = [diagramId, `d${diagramId}`];
+        for (const id of residualIds) {
+          const el = document.getElementById(id);
+          if (el && el.parentNode) {
+            el.parentNode.removeChild(el);
+          }
+        }
+      } catch {
+        // Ignore DOM cleanup errors
+      }
     };
   }, [code, isDark, diagramId]);
 

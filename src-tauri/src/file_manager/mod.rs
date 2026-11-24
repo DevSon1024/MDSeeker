@@ -37,7 +37,8 @@ mod tests {
         fn create_file(&self, file_name: &str, content: &[u8]) -> PathBuf {
             let p = self.file_path(file_name);
             let mut f = File::create(&p).expect("Failed to create test file");
-            f.write_all(content).expect("Failed to write test file content");
+            f.write_all(content)
+                .expect("Failed to write test file content");
             p
         }
     }
@@ -68,7 +69,8 @@ mod tests {
         let content = b"Document with .markdown extension.";
         let file = dir.create_file("doc.markdown", content);
 
-        let res = read_markdown_file(&file.to_string_lossy()).expect("Failed to read valid .markdown");
+        let res =
+            read_markdown_file(&file.to_string_lossy()).expect("Failed to read valid .markdown");
         assert_eq!(res.file_name, "doc.markdown");
         assert_eq!(res.file_extension, "markdown");
         assert_eq!(res.raw_content, "Document with .markdown extension.");
@@ -83,7 +85,8 @@ mod tests {
         let res1 = read_markdown_file(&file1.to_string_lossy()).expect("Failed uppercase .MD");
         assert_eq!(res1.file_extension, "md");
 
-        let res2 = read_markdown_file(&file2.to_string_lossy()).expect("Failed uppercase .MARKDOWN");
+        let res2 =
+            read_markdown_file(&file2.to_string_lossy()).expect("Failed uppercase .MARKDOWN");
         assert_eq!(res2.file_extension, "markdown");
     }
 

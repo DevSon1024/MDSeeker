@@ -1,7 +1,7 @@
-use std::fs;
-use std::path::{Path, PathBuf};
 use crate::file_manager::errors::FileError;
 use crate::file_manager::types::{MAX_FILE_SIZE_BYTES, SUPPORTED_EXTENSIONS};
+use std::fs;
+use std::path::{Path, PathBuf};
 
 /// Validates that the file has a supported Markdown extension (.md or .markdown, case-insensitive).
 pub fn validate_extension(path: &Path) -> Result<String, FileError> {
@@ -14,7 +14,9 @@ pub fn validate_extension(path: &Path) -> Result<String, FileError> {
     if SUPPORTED_EXTENSIONS.contains(&ext_lower.as_str()) {
         Ok(ext_lower)
     } else {
-        Err(FileError::UnsupportedExtension(path.to_string_lossy().to_string()))
+        Err(FileError::UnsupportedExtension(
+            path.to_string_lossy().to_string(),
+        ))
     }
 }
 
@@ -39,7 +41,9 @@ pub fn validate_path(raw_path: &str) -> Result<(PathBuf, fs::Metadata, String), 
 
     // Query filesystem metadata
     let metadata = fs::metadata(&canonical).map_err(|io_err| match io_err.kind() {
-        std::io::ErrorKind::NotFound => FileError::FileNotFound(canonical.to_string_lossy().to_string()),
+        std::io::ErrorKind::NotFound => {
+            FileError::FileNotFound(canonical.to_string_lossy().to_string())
+        }
         std::io::ErrorKind::PermissionDenied => {
             FileError::PermissionDenied(canonical.to_string_lossy().to_string())
         }

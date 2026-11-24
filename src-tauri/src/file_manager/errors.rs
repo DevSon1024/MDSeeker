@@ -1,5 +1,5 @@
-use std::fmt;
 use crate::file_manager::types::FileErrorResponse;
+use std::fmt;
 
 #[derive(Debug, PartialEq, Eq)]
 pub enum FileError {
@@ -35,7 +35,11 @@ impl fmt::Display for FileError {
                     path
                 )
             }
-            FileError::FileTooLarge { path, size_bytes, max_bytes } => {
+            FileError::FileTooLarge {
+                path,
+                size_bytes,
+                max_bytes,
+            } => {
                 write!(
                     f,
                     "File '{}' exceeds maximum allowed size ({} bytes > {} bytes limit).",
@@ -75,14 +79,21 @@ impl From<FileError> for FileErrorResponse {
                 path: Some(path),
                 details: None,
             },
-            FileError::FileTooLarge { path, size_bytes, max_bytes } => FileErrorResponse {
+            FileError::FileTooLarge {
+                path,
+                size_bytes,
+                max_bytes,
+            } => FileErrorResponse {
                 code: "FILE_TOO_LARGE".to_string(),
                 message: format!(
                     "File exceeds maximum size limit of {} MB.",
                     max_bytes / (1024 * 1024)
                 ),
                 path: Some(path),
-                details: Some(format!("File size: {} bytes, Limit: {} bytes", size_bytes, max_bytes)),
+                details: Some(format!(
+                    "File size: {} bytes, Limit: {} bytes",
+                    size_bytes, max_bytes
+                )),
             },
             FileError::PermissionDenied(path) => FileErrorResponse {
                 code: "PERMISSION_DENIED".to_string(),
@@ -92,13 +103,15 @@ impl From<FileError> for FileErrorResponse {
             },
             FileError::InvalidUtf8 { path, reason } => FileErrorResponse {
                 code: "INVALID_UTF8".to_string(),
-                message: "File contains invalid binary or non-UTF-8 encoded characters.".to_string(),
+                message: "File contains invalid binary or non-UTF-8 encoded characters."
+                    .to_string(),
                 path: Some(path),
                 details: Some(reason),
             },
             FileError::NotAFile(path) => FileErrorResponse {
                 code: "NOT_A_FILE".to_string(),
-                message: "The selected path is a directory or special device, not a file.".to_string(),
+                message: "The selected path is a directory or special device, not a file."
+                    .to_string(),
                 path: Some(path),
                 details: None,
             },

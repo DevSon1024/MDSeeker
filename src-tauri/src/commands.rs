@@ -1,7 +1,7 @@
-use serde::{Deserialize, Serialize};
 use crate::file_manager::{
     self, DocumentMetadata, DocumentResponse, FileErrorResponse, ValidationResult,
 };
+use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct AppInfo {
@@ -144,10 +144,19 @@ mod tests {
 
     #[test]
     fn test_command_highlight_code() {
-        let res = highlight_code("let a = 1;".to_string(), Some("rust".to_string()), Some("dark".to_string()));
+        let res = highlight_code(
+            "let a = 1;".to_string(),
+            Some("rust".to_string()),
+            Some("dark".to_string()),
+        );
         assert_eq!(res.language, "Rust");
         assert_eq!(res.lines.len(), 1);
-        let reconstructed: String = res.lines.iter().flat_map(|l| &l.tokens).map(|t| t.content.as_str()).collect();
+        let reconstructed: String = res
+            .lines
+            .iter()
+            .flat_map(|l| &l.tokens)
+            .map(|t| t.content.as_str())
+            .collect();
         assert_eq!(reconstructed, "let a = 1;");
     }
 

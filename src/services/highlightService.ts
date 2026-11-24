@@ -3,6 +3,21 @@ import { HighlightResult } from "@/types/markdown";
 
 const highlightCache = new Map<string, HighlightResult>();
 const MAX_CACHE_SIZE = 500;
+const EVICTION_BATCH_SIZE = 50;
+
+/**
+ * Clears the in-memory syntax highlighting cache.
+ */
+export function clearHighlightCache(): void {
+  highlightCache.clear();
+}
+
+/**
+ * Returns the current number of cached highlighted snippets.
+ */
+export function getHighlightCacheSize(): number {
+  return highlightCache.size;
+}
 
 /**
  * Highlights a block of code using Rust syntect and returns structured tokens.
@@ -28,9 +43,15 @@ export async function highlightCode(
     });
 
     if (highlightCache.size >= MAX_CACHE_SIZE) {
-      // Evict oldest entries
-      const firstKey = highlightCache.keys().next().value;
-      if (firstKey) highlightCache.delete(firstKey);
+      // Evict oldest entries in batch to prevent frequent micro-evictions
+      const keysToDelete: string[] = [];
+      for (const key of highlightCache.keys()) {
+        keysToDelete.push(key);
+        if (keysToDelete.length >= EVICTION_BATCH_SIZE) break;
+      }
+      for (const key of keysToDelete) {
+        highlightCache.delete(key);
+      }
     }
 
     highlightCache.set(cacheKey, result);
@@ -50,6 +71,18 @@ export async function highlightCode(
       language: language || "Plain Text",
     };
 
+    if (highlightCache.size >= MAX_CACHE_SIZE) {
+      const keysToDelete: string[] = [];
+      for (const key of highlightCache.keys()) {
+        keysToDelete.push(key);
+        if (keysToDelete.length >= EVICTION_BATCH_SIZE) break;
+      }
+      for (const key of keysToDelete) {
+        highlightCache.delete(key);
+      }
+    }
+
+    highlightCache.set(cacheKey, fallbackResult);
     return fallbackResult;
   }
 }

@@ -60,4 +60,6 @@ export interface OpenDocument {
 
   readerScrollPosition: number;
   sourceScrollPosition: number;
+
+  loadGeneration?: number;
 }

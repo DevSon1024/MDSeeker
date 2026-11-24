@@ -45,6 +45,19 @@ export interface DocumentState {
   setIsDraggingOver: (isDragging: boolean) => void;
 }
 
+// Generation tracking per document to prevent stale async results from overwriting newer state
+const documentGenerations = new Map<string, number>();
+
+// In-flight loading promises to deduplicate rapid concurrent open requests
+const inFlightLoadPromises = new Map<string, Promise<string | null>>();
+
+// Scroll notification raf tracker
+let scrollRafId: number | null = null;
+const scheduleFrame =
+  typeof requestAnimationFrame === "function"
+    ? requestAnimationFrame
+    : (cb: () => void) => setTimeout(cb, 16) as unknown as number;
+
 export function normalizePath(p: string): string {
   return p.replace(/\\/g, "/").toLowerCase();
 }
@@ -148,140 +161,175 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
   openDocument: async (filePath: string): Promise<string | null> => {
     const norm = normalizePath(filePath);
 
-    // 1. Duplicate Path Detection
-    const existing = get().documents.find(
-      (d) => normalizePath(d.canonicalPath) === norm || normalizePath(d.id) === norm
-    );
-
-    if (existing) {
-      get().setActiveDocument(existing.id);
-      return existing.id;
+    // If an open operation for this exact path is already in flight, reuse its promise
+    const inFlight = inFlightLoadPromises.get(norm);
+    if (inFlight) {
+      return inFlight;
     }
 
-    // 2. Create placeholder document in loading state
-    const docId = filePath;
-    const rawFileName = filePath.split(/[/\\]/).pop() || filePath;
-    const rawExtension = rawFileName.includes(".") ? rawFileName.split(".").pop() || "md" : "md";
-
-    const newDoc: OpenDocument = {
-      id: docId,
-      canonicalPath: filePath,
-      fileName: rawFileName,
-      fileExtension: rawExtension,
-      fileSizeBytes: 0,
-      lastModifiedTimestamp: null,
-      rawContent: "",
-      parsedDocument: null,
-      isLoading: true,
-      isParsing: false,
-      error: null,
-      parseError: null,
-      lastAccessedAt: Date.now(),
-      readerScrollPosition: 0,
-      sourceScrollPosition: 0,
-    };
-
-    const nextDocs = [...get().documents, newDoc];
-    set(syncActiveState(nextDocs, docId));
-
-    const requestId = get().currentRequestId + 1;
-    set({ currentRequestId: requestId });
-
-    // 3. Load file via Rust file manager
-    try {
-      const loaded = await readMarkdownFile(filePath);
-
-      // Verify file wasn't closed while reading
-      const currentDoc = get().documents.find((d) => d.id === docId);
-      if (!currentDoc) return null;
-
-      // Record in recent files store
-      useRecentFilesStore.getState().addRecentFile(loaded.canonicalPath, loaded.fileName);
-
-      // Check if canonical path matches another open document
-      const canonicalNorm = normalizePath(loaded.canonicalPath);
-      const duplicateCanonical = get().documents.find(
-        (d) => d.id !== docId && normalizePath(d.canonicalPath) === canonicalNorm
+    const loadPromise = (async () => {
+      // 1. Duplicate Path Detection
+      const existing = get().documents.find(
+        (d) => normalizePath(d.canonicalPath) === norm || normalizePath(d.id) === norm
       );
 
-      if (duplicateCanonical) {
-        // Remove temporary placeholder and activate existing
-        const cleaned = get().documents.filter((d) => d.id !== docId);
-        set(syncActiveState(cleaned, duplicateCanonical.id));
-        return duplicateCanonical.id;
+      if (existing) {
+        get().setActiveDocument(existing.id);
+        return existing.id;
       }
 
-      // Update document with loaded file details
-      const updatedDocs = get().documents.map((d) => {
-        if (d.id === docId) {
-          return {
-            ...d,
-            canonicalPath: loaded.canonicalPath,
-            fileName: loaded.fileName,
-            fileExtension: loaded.fileExtension,
-            fileSizeBytes: loaded.fileSizeBytes,
-            lastModifiedTimestamp: loaded.lastModifiedTimestamp,
-            rawContent: loaded.rawContent,
-            isLoading: false,
-            isParsing: true,
-            error: null,
-          };
-        }
-        return d;
-      });
+      // 2. Create placeholder document in loading state with tracking generation
+      const docId = filePath;
+      const generation = (documentGenerations.get(docId) || 0) + 1;
+      documentGenerations.set(docId, generation);
 
-      set(syncActiveState(updatedDocs, get().activeDocumentId));
+      const rawFileName = filePath.split(/[/\\]/).pop() || filePath;
+      const rawExtension = rawFileName.includes(".") ? rawFileName.split(".").pop() || "md" : "md";
 
-      // 4. Asynchronously parse Markdown AST
+      const newDoc: OpenDocument = {
+        id: docId,
+        canonicalPath: filePath,
+        fileName: rawFileName,
+        fileExtension: rawExtension,
+        fileSizeBytes: 0,
+        lastModifiedTimestamp: null,
+        rawContent: "",
+        parsedDocument: null,
+        isLoading: true,
+        isParsing: false,
+        error: null,
+        parseError: null,
+        lastAccessedAt: Date.now(),
+        readerScrollPosition: 0,
+        sourceScrollPosition: 0,
+        loadGeneration: generation,
+      };
+
+      const nextDocs = [...get().documents, newDoc];
+      set(syncActiveState(nextDocs, docId));
+
+      const requestId = get().currentRequestId + 1;
+      set({ currentRequestId: requestId });
+
+      // 3. Load file via Rust file manager
       try {
-        const parsed = await parseMarkdown(loaded.rawContent);
-        if (get().documents.some((d) => d.id === docId)) {
-          const docsWithAst = get().documents.map((d) => {
-            if (d.id === docId) {
-              return {
-                ...d,
-                parsedDocument: parsed,
-                isParsing: false,
-                parseError: null,
-              };
-            }
-            return d;
-          });
-          set(syncActiveState(docsWithAst, get().activeDocumentId));
-        }
-      } catch (parseErr) {
-        if (get().documents.some((d) => d.id === docId)) {
-          const docsWithError = get().documents.map((d) => {
-            if (d.id === docId) {
-              return {
-                ...d,
-                parsedDocument: null,
-                isParsing: false,
-                parseError: parseErr as ParseError,
-              };
-            }
-            return d;
-          });
-          set(syncActiveState(docsWithError, get().activeDocumentId));
-        }
-      }
+        const loaded = await readMarkdownFile(filePath);
 
-      return docId;
-    } catch (readErr) {
-      // Mark specific document in error state without affecting other tabs
-      const docsWithErr = get().documents.map((d) => {
-        if (d.id === docId) {
-          return {
-            ...d,
-            isLoading: false,
-            isParsing: false,
-            error: readErr as FileErrorResponse,
-          };
+        // Concurrency check: Verify file wasn't closed or superseded while reading
+        if (
+          documentGenerations.get(docId) !== generation ||
+          !get().documents.some((d) => d.id === docId)
+        ) {
+          return null;
         }
-        return d;
-      });
-      set(syncActiveState(docsWithErr, get().activeDocumentId));
-      return docId;
+
+        // Record in recent files store
+        useRecentFilesStore.getState().addRecentFile(loaded.canonicalPath, loaded.fileName);
+
+        // Check if canonical path matches another open document
+        const canonicalNorm = normalizePath(loaded.canonicalPath);
+        const duplicateCanonical = get().documents.find(
+          (d) => d.id !== docId && normalizePath(d.canonicalPath) === canonicalNorm
+        );
+
+        if (duplicateCanonical) {
+          // Remove temporary placeholder and activate existing
+          const cleaned = get().documents.filter((d) => d.id !== docId);
+          set(syncActiveState(cleaned, duplicateCanonical.id));
+          return duplicateCanonical.id;
+        }
+
+        // Update document with loaded file details
+        const updatedDocs = get().documents.map((d) => {
+          if (d.id === docId) {
+            return {
+              ...d,
+              canonicalPath: loaded.canonicalPath,
+              fileName: loaded.fileName,
+              fileExtension: loaded.fileExtension,
+              fileSizeBytes: loaded.fileSizeBytes,
+              lastModifiedTimestamp: loaded.lastModifiedTimestamp,
+              rawContent: loaded.rawContent,
+              isLoading: false,
+              isParsing: true,
+              error: null,
+            };
+          }
+          return d;
+        });
+
+        set(syncActiveState(updatedDocs, get().activeDocumentId));
+
+        // 4. Asynchronously parse Markdown AST
+        try {
+          const parsed = await parseMarkdown(loaded.rawContent);
+          // Concurrency check: Verify generation hasn't changed and document still exists
+          if (
+            documentGenerations.get(docId) === generation &&
+            get().documents.some((d) => d.id === docId)
+          ) {
+            const docsWithAst = get().documents.map((d) => {
+              if (d.id === docId) {
+                return {
+                  ...d,
+                  parsedDocument: parsed,
+                  isParsing: false,
+                  parseError: null,
+                };
+              }
+              return d;
+            });
+            set(syncActiveState(docsWithAst, get().activeDocumentId));
+          }
+        } catch (parseErr) {
+          if (
+            documentGenerations.get(docId) === generation &&
+            get().documents.some((d) => d.id === docId)
+          ) {
+            const docsWithError = get().documents.map((d) => {
+              if (d.id === docId) {
+                return {
+                  ...d,
+                  parsedDocument: null,
+                  isParsing: false,
+                  parseError: parseErr as ParseError,
+                };
+              }
+              return d;
+            });
+            set(syncActiveState(docsWithError, get().activeDocumentId));
+          }
+        }
+
+        return docId;
+      } catch (readErr) {
+        // Concurrency check: Only display error if document is still open and matches generation
+        if (
+          documentGenerations.get(docId) === generation &&
+          get().documents.some((d) => d.id === docId)
+        ) {
+          const docsWithErr = get().documents.map((d) => {
+            if (d.id === docId) {
+              return {
+                ...d,
+                isLoading: false,
+                isParsing: false,
+                error: readErr as FileErrorResponse,
+              };
+            }
+            return d;
+          });
+          set(syncActiveState(docsWithErr, get().activeDocumentId));
+        }
+        return docId;
+      }
+    })();
+
+    inFlightLoadPromises.set(norm, loadPromise);
+    try {
+      return await loadPromise;
+    } finally {
+      inFlightLoadPromises.delete(norm);
     }
   },
 
@@ -351,6 +399,7 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
       }
     }
 
+    documentGenerations.delete(targetId);
     set(syncActiveState(remaining, nextActiveId));
   },
 
@@ -380,6 +429,7 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
   },
 
   closeAllDocuments: () => {
+    documentGenerations.clear();
     set(syncActiveState([], null));
   },
 
@@ -403,19 +453,25 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
   },
 
   updateDocumentScrollPosition: (id: string, mode: "reader" | "source", position: number) => {
-    set((state) => ({
-      documents: state.documents.map((d) => {
-        if (d.id === id) {
-          return {
-            ...d,
-            ...(mode === "reader"
-              ? { readerScrollPosition: position }
-              : { sourceScrollPosition: position }),
-          };
-        }
-        return d;
-      }),
-    }));
+    // 1. Immediately record position in in-memory document record
+    const targetDoc = get().documents.find((d) => d.id === id);
+    if (!targetDoc) return;
+
+    if (mode === "reader") {
+      targetDoc.readerScrollPosition = position;
+    } else {
+      targetDoc.sourceScrollPosition = position;
+    }
+
+    // 2. Schedule single throttled RAF update to avoid render storms during active scrolling
+    if (scrollRafId === null) {
+      scrollRafId = scheduleFrame(() => {
+        scrollRafId = null;
+        set((state) => ({
+          documents: [...state.documents],
+        }));
+      });
+    }
   },
 
   activateNextTab: () => {

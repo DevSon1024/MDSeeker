@@ -14,38 +14,51 @@ export function OutlineSidebar() {
     return extractOutline(parsedDocument);
   }, [parsedDocument]);
 
-  // Track active heading during scroll
+  // Track active heading during scroll with RAF throttling to eliminate layout thrashing
   useEffect(() => {
     if (headings.length === 0) {
       setActiveHeadingId(null);
       return;
     }
 
+    let rafId: number | null = null;
+
     const handleScroll = () => {
-      // Find heading closest to top of reader viewport
-      const headingElements = headings
-        .map((h) => ({ id: h.id, el: document.getElementById(h.id) }))
-        .filter((item): item is { id: string; el: HTMLElement } => item.el !== null);
+      if (rafId !== null) return;
 
-      if (headingElements.length === 0) return;
+      rafId = requestAnimationFrame(() => {
+        rafId = null;
 
-      const viewportTop = 80;
-      let currentActiveId = headingElements[0].id;
+        // Find heading closest to top of reader viewport
+        const headingElements = headings
+          .map((h) => ({ id: h.id, el: document.getElementById(h.id) }))
+          .filter((item): item is { id: string; el: HTMLElement } => item.el !== null);
 
-      for (const item of headingElements) {
-        const rect = item.el.getBoundingClientRect();
-        if (rect.top <= viewportTop + 40) {
-          currentActiveId = item.id;
-        } else {
-          break;
+        if (headingElements.length === 0) return;
+
+        const viewportTop = 80;
+        let currentActiveId = headingElements[0].id;
+
+        for (const item of headingElements) {
+          const rect = item.el.getBoundingClientRect();
+          if (rect.top <= viewportTop + 40) {
+            currentActiveId = item.id;
+          } else {
+            break;
+          }
         }
-      }
 
-      setActiveHeadingId(currentActiveId);
+        setActiveHeadingId(currentActiveId);
+      });
     };
 
     window.addEventListener("scroll", handleScroll, true);
-    return () => window.removeEventListener("scroll", handleScroll, true);
+    return () => {
+      window.removeEventListener("scroll", handleScroll, true);
+      if (rafId !== null) {
+        cancelAnimationFrame(rafId);
+      }
+    };
   }, [headings]);
 
   const handleHeadingClick = (heading: OutlineHeading) => {

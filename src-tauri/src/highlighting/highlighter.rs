@@ -1,11 +1,11 @@
 use std::sync::OnceLock;
 use syntect::easy::HighlightLines;
-use syntect::parsing::{SyntaxReference, SyntaxSet};
 use syntect::highlighting::ThemeSet;
+use syntect::parsing::{SyntaxReference, SyntaxSet};
 use syntect::util::LinesWithEndings;
 
 use super::themes::{format_font_style, format_hex_color, select_theme};
-use super::types::{HighlightedLine, HighlightedToken, HighlightResult};
+use super::types::{HighlightResult, HighlightedLine, HighlightedToken};
 
 static SYNTAX_SET: OnceLock<SyntaxSet> = OnceLock::new();
 static THEME_SET: OnceLock<ThemeSet> = OnceLock::new();
@@ -53,7 +53,10 @@ pub fn normalize_language_alias(lang: &str) -> &str {
 }
 
 /// Resolves a syntax reference from an optional language identifier.
-fn resolve_syntax<'a>(syntax_set: &'a SyntaxSet, language: Option<&str>) -> (&'a SyntaxReference, String) {
+fn resolve_syntax<'a>(
+    syntax_set: &'a SyntaxSet,
+    language: Option<&str>,
+) -> (&'a SyntaxReference, String) {
     if let Some(lang) = language {
         let trimmed = lang.trim();
         if !trimmed.is_empty() {
@@ -78,11 +81,18 @@ fn resolve_syntax<'a>(syntax_set: &'a SyntaxSet, language: Option<&str>) -> (&'a
         }
     }
 
-    (syntax_set.find_syntax_plain_text(), "Plain Text".to_string())
+    (
+        syntax_set.find_syntax_plain_text(),
+        "Plain Text".to_string(),
+    )
 }
 
 /// Highlights source code into structured tokens, preserving every character and line break.
-pub fn highlight_code(code: &str, language: Option<&str>, theme_mode: Option<&str>) -> HighlightResult {
+pub fn highlight_code(
+    code: &str,
+    language: Option<&str>,
+    theme_mode: Option<&str>,
+) -> HighlightResult {
     let syntax_set = get_syntax_set();
     let theme_set = get_theme_set();
 

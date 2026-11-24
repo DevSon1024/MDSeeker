@@ -51,9 +51,7 @@ pub enum BlockNode {
         content: Vec<InlineNode>,
     },
     /// Paragraph containing inline nodes.
-    Paragraph {
-        content: Vec<InlineNode>,
-    },
+    Paragraph { content: Vec<InlineNode> },
     /// Blockquote container with optional admonition kind (e.g. note, tip, warning).
     Blockquote {
         kind: Option<String>,
@@ -80,18 +78,14 @@ pub enum BlockNode {
         rows: Vec<TableRow>,
     },
     /// Raw HTML block represented as inert structured data (never executed).
-    HtmlBlock {
-        content: String,
-    },
+    HtmlBlock { content: String },
     /// Footnote definition containing nested blocks.
     FootnoteDefinition {
         label: String,
         content: Vec<BlockNode>,
     },
     /// Block-level mathematical expression ($$...$$).
-    BlockMath {
-        math: String,
-    },
+    BlockMath { math: String },
 }
 
 /// An individual item within a list.
@@ -134,25 +128,15 @@ pub enum TableAlignment {
 #[serde(tag = "type", rename_all = "camelCase")]
 pub enum InlineNode {
     /// Plain text string.
-    Text {
-        value: String,
-    },
+    Text { value: String },
     /// Emphasized / italic text container.
-    Emphasis {
-        content: Vec<InlineNode>,
-    },
+    Emphasis { content: Vec<InlineNode> },
     /// Strong / bold text container.
-    Strong {
-        content: Vec<InlineNode>,
-    },
+    Strong { content: Vec<InlineNode> },
     /// Strikethrough text container.
-    Strikethrough {
-        content: Vec<InlineNode>,
-    },
+    Strikethrough { content: Vec<InlineNode> },
     /// Monospaced inline code span.
-    Code {
-        code: String,
-    },
+    Code { code: String },
     /// Hyperlink with target URL, optional hover title, and link text inlines.
     Link {
         url: String,
@@ -170,15 +154,9 @@ pub enum InlineNode {
     /// Hard line break (explicit newline or trailing spaces).
     HardBreak,
     /// Inline HTML tag represented as inert text.
-    InlineHtml {
-        content: String,
-    },
+    InlineHtml { content: String },
     /// Reference to a footnote definition.
-    FootnoteReference {
-        label: String,
-    },
+    FootnoteReference { label: String },
     /// Inline LaTeX mathematical expression ($...$).
-    InlineMath {
-        math: String,
-    },
+    InlineMath { math: String },
 }

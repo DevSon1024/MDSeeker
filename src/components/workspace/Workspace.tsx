@@ -4,6 +4,7 @@ import { EmptyWorkspace } from "./EmptyWorkspace";
 import { MarkdownReader } from "@/components/markdown/MarkdownReader";
 import { MarkdownSourceEditor } from "@/components/source/MarkdownSourceEditor";
 import { SplitWorkspace } from "./SplitWorkspace";
+import { DocumentErrorBoundary } from "@/components/common/DocumentErrorBoundary";
 import { ArrowDownToLine, AlertTriangle, X, Loader2 } from "lucide-react";
 
 export function Workspace() {
@@ -99,34 +100,40 @@ export function Workspace() {
         </div>
       ) : (
         /* Active Document View Based on ViewMode */
-        viewMode === "reading" ? (
-          parsedDocument ? (
-            <MarkdownReader
-              document={parsedDocument}
-              canonicalPath={document.canonicalPath}
+        <DocumentErrorBoundary
+          key={document.canonicalPath}
+          documentId={document.canonicalPath}
+          documentTitle={document.fileName}
+        >
+          {viewMode === "reading" ? (
+            parsedDocument ? (
+              <MarkdownReader
+                document={parsedDocument}
+                canonicalPath={document.canonicalPath}
+                fileName={document.fileName}
+              />
+            ) : (
+              <div className="flex-1 flex flex-col p-6 overflow-hidden">
+                <div className="mb-3 text-[12px] text-amber-500 font-medium">
+                  Could not parse formatted AST. Displaying raw document content:
+                </div>
+                <pre className="flex-1 p-4 rounded-[var(--fluent-radius-md)] bg-[var(--fluent-bg-card)] border border-[var(--fluent-border-card)] overflow-auto font-mono text-[13px] text-[var(--fluent-text-primary)]">
+                  {document.rawContent}
+                </pre>
+              </div>
+            )
+          ) : viewMode === "source" ? (
+            <MarkdownSourceEditor
+              content={document.rawContent}
               fileName={document.fileName}
             />
           ) : (
-            <div className="flex-1 flex flex-col p-6 overflow-hidden">
-              <div className="mb-3 text-[12px] text-amber-500 font-medium">
-                Could not parse formatted AST. Displaying raw document content:
-              </div>
-              <pre className="flex-1 p-4 rounded-[var(--fluent-radius-md)] bg-[var(--fluent-bg-card)] border border-[var(--fluent-border-card)] overflow-auto font-mono text-[13px] text-[var(--fluent-text-primary)]">
-                {document.rawContent}
-              </pre>
-            </div>
-          )
-        ) : viewMode === "source" ? (
-          <MarkdownSourceEditor
-            content={document.rawContent}
-            fileName={document.fileName}
-          />
-        ) : (
-          <SplitWorkspace
-            document={document}
-            parsedDocument={parsedDocument}
-          />
-        )
+            <SplitWorkspace
+              document={document}
+              parsedDocument={parsedDocument}
+            />
+          )}
+        </DocumentErrorBoundary>
       )}
     </div>
   );

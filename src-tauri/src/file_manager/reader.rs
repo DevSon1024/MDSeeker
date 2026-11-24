@@ -1,10 +1,10 @@
-use std::fs;
-use std::time::UNIX_EPOCH;
 use crate::file_manager::errors::FileError;
 use crate::file_manager::types::{
     DocumentMetadata, DocumentResponse, FileErrorResponse, ValidationResult, MAX_FILE_SIZE_BYTES,
 };
 use crate::file_manager::validation::validate_path;
+use std::fs;
+use std::time::UNIX_EPOCH;
 
 /// Reads a validated Markdown file into memory, strictly enforcing UTF-8 encoding and size limits.
 pub fn read_markdown_file(raw_path: &str) -> Result<DocumentResponse, FileError> {

@@ -683,27 +683,14 @@ pub fn parse_markdown(
 
 /// Extracts document metadata from parsed AST blocks and frontmatter.
 fn extract_metadata(blocks: &[BlockNode], frontmatter: Option<&str>) -> DocumentParseMetadata {
-    let mut word_count = 0;
-    let mut char_count = 0;
-    let mut title = None;
-    let mut has_tables = false;
-    let mut has_code_blocks = false;
-    let mut has_math = false;
-    let mut has_mermaid = false;
-    let mut has_task_lists = false;
-    let mut headings_count = 0;
+    let mut collector = MetadataCollector::default();
 
     // Check frontmatter title first
     if let Some(fm) = frontmatter {
-        title = extract_yaml_title(fm);
+        collector.title = extract_yaml_title(fm);
     }
 
-    fn scan_inlines(
-        inlines: &[InlineNode],
-        words: &mut usize,
-        chars: &mut usize,
-        math: &mut bool,
-    ) {
+    fn scan_inlines(inlines: &[InlineNode], words: &mut usize, chars: &mut usize, math: &mut bool) {
         for inline in inlines {
             match inline {
                 InlineNode::Text { value } => {
@@ -743,144 +730,124 @@ fn extract_metadata(blocks: &[BlockNode], frontmatter: Option<&str>) -> Document
         }
     }
 
-    fn scan_blocks(
-        blocks: &[BlockNode],
-        title: &mut Option<String>,
-        words: &mut usize,
-        chars: &mut usize,
-        tables: &mut bool,
-        code_blocks: &mut bool,
-        math: &mut bool,
-        mermaid: &mut bool,
-        tasks: &mut bool,
-        headings: &mut usize,
-    ) {
+    #[derive(Default)]
+    struct MetadataCollector {
+        title: Option<String>,
+        word_count: usize,
+        char_count: usize,
+        has_tables: bool,
+        has_code_blocks: bool,
+        has_math: bool,
+        has_mermaid: bool,
+        has_task_lists: bool,
+        headings_count: usize,
+    }
+
+    fn scan_blocks(blocks: &[BlockNode], collector: &mut MetadataCollector) {
         for block in blocks {
             match block {
                 BlockNode::Heading { level, content, .. } => {
-                    *headings += 1;
-                    if *level == 1 && title.is_none() {
+                    collector.headings_count += 1;
+                    if *level == 1 && collector.title.is_none() {
                         let plain = inlines_to_plain_text(content);
                         if !plain.trim().is_empty() {
-                            *title = Some(plain.trim().to_string());
+                            collector.title = Some(plain.trim().to_string());
                         }
                     }
-                    scan_inlines(content, words, chars, math);
+                    scan_inlines(
+                        content,
+                        &mut collector.word_count,
+                        &mut collector.char_count,
+                        &mut collector.has_math,
+                    );
                 }
                 BlockNode::Paragraph { content } => {
-                    scan_inlines(content, words, chars, math);
+                    scan_inlines(
+                        content,
+                        &mut collector.word_count,
+                        &mut collector.char_count,
+                        &mut collector.has_math,
+                    );
                 }
                 BlockNode::Blockquote { content, .. } => {
-                    scan_blocks(
-                        content,
-                        title,
-                        words,
-                        chars,
-                        tables,
-                        code_blocks,
-                        math,
-                        mermaid,
-                        tasks,
-                        headings,
-                    );
+                    scan_blocks(content, collector);
                 }
                 BlockNode::List { items, .. } => {
                     for item in items {
                         if item.checked.is_some() {
-                            *tasks = true;
+                            collector.has_task_lists = true;
                         }
-                        scan_blocks(
-                            &item.content,
-                            title,
-                            words,
-                            chars,
-                            tables,
-                            code_blocks,
-                            math,
-                            mermaid,
-                            tasks,
-                            headings,
-                        );
+                        scan_blocks(&item.content, collector);
                     }
                 }
                 BlockNode::BlockMath { math: m } => {
-                    *words += m.split_whitespace().count();
-                    *chars += m.chars().count();
-                    *math = true;
+                    collector.word_count += m.split_whitespace().count();
+                    collector.char_count += m.chars().count();
+                    collector.has_math = true;
                 }
                 BlockNode::CodeBlock { language, code, .. } => {
-                    *code_blocks = true;
-                    if language.as_deref().map(|l| l.trim().to_lowercase()) == Some("mermaid".to_string()) {
-                        *mermaid = true;
+                    collector.has_code_blocks = true;
+                    if language.as_deref().map(|l| l.trim().to_lowercase())
+                        == Some("mermaid".to_string())
+                    {
+                        collector.has_mermaid = true;
                     }
-                    *words += code.split_whitespace().count();
-                    *chars += code.chars().count();
+                    collector.word_count += code.split_whitespace().count();
+                    collector.char_count += code.chars().count();
                 }
                 BlockNode::Table { columns, rows } => {
-                    *tables = true;
+                    collector.has_tables = true;
                     for col in columns {
-                        scan_inlines(&col.header, words, chars, math);
+                        scan_inlines(
+                            &col.header,
+                            &mut collector.word_count,
+                            &mut collector.char_count,
+                            &mut collector.has_math,
+                        );
                     }
                     for row in rows {
                         for cell in &row.cells {
-                            scan_inlines(cell, words, chars, math);
+                            scan_inlines(
+                                cell,
+                                &mut collector.word_count,
+                                &mut collector.char_count,
+                                &mut collector.has_math,
+                            );
                         }
                     }
                 }
                 BlockNode::FootnoteDefinition { content, .. } => {
-                    scan_blocks(
-                        content,
-                        title,
-                        words,
-                        chars,
-                        tables,
-                        code_blocks,
-                        math,
-                        mermaid,
-                        tasks,
-                        headings,
-                    );
+                    scan_blocks(content, collector);
                 }
                 BlockNode::HtmlBlock { .. } | BlockNode::ThematicBreak => {}
             }
         }
     }
 
-    scan_blocks(
-        blocks,
-        &mut title,
-        &mut word_count,
-        &mut char_count,
-        &mut has_tables,
-        &mut has_code_blocks,
-        &mut has_math,
-        &mut has_mermaid,
-        &mut has_task_lists,
-        &mut headings_count,
-    );
+    scan_blocks(blocks, &mut collector);
 
-    let reading_time_minutes = if word_count == 0 {
+    let reading_time_minutes = if collector.word_count == 0 {
         0.0
     } else {
-        ((word_count as f32 / 200.0) * 10.0).round() / 10.0
+        ((collector.word_count as f32 / 200.0) * 10.0).round() / 10.0
     };
 
     DocumentParseMetadata {
-        title,
-        word_count,
-        character_count: char_count,
-        reading_time_minutes: if reading_time_minutes < 0.1 && word_count > 0 {
+        title: collector.title,
+        word_count: collector.word_count,
+        character_count: collector.char_count,
+        reading_time_minutes: if reading_time_minutes < 0.1 && collector.word_count > 0 {
             0.1
         } else {
             reading_time_minutes
         },
         frontmatter: frontmatter.map(|s| s.to_string()),
-        has_tables,
-        has_code_blocks,
-        has_math,
-        has_mermaid,
-        has_task_lists,
-        headings_count,
+        has_tables: collector.has_tables,
+        has_code_blocks: collector.has_code_blocks,
+        has_math: collector.has_math,
+        has_mermaid: collector.has_mermaid,
+        has_task_lists: collector.has_task_lists,
+        headings_count: collector.headings_count,
     }
 }
 
@@ -911,10 +878,7 @@ fn extract_yaml_title(frontmatter: &str) -> Option<String> {
     for line in frontmatter.lines() {
         let trimmed = line.trim();
         if let Some(rest) = trimmed.strip_prefix("title:") {
-            let title = rest
-                .trim()
-                .trim_matches(|c| c == '"' || c == '\'')
-                .trim();
+            let title = rest.trim().trim_matches(|c| c == '"' || c == '\'').trim();
             if !title.is_empty() {
                 return Some(title.to_string());
             }

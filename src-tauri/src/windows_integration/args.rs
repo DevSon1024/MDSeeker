@@ -1,5 +1,5 @@
-use std::path::{Path, PathBuf};
 use crate::file_manager::validation::validate_path;
+use std::path::{Path, PathBuf};
 
 /// Processes raw incoming command-line arguments and returns a list of valid, canonicalized Markdown file paths.
 ///
@@ -26,10 +26,7 @@ pub fn process_incoming_args(args: &[String], cwd: &str) -> Vec<String> {
         }
 
         // Strip surrounding quotes if present
-        let unquoted = trimmed
-            .trim_matches('"')
-            .trim_matches('\'')
-            .trim();
+        let unquoted = trimmed.trim_matches('"').trim_matches('\'').trim();
 
         if unquoted.is_empty() {
             continue;
@@ -86,7 +83,11 @@ mod tests {
     impl TempTestDir {
         fn new(name: &str) -> Self {
             let mut path = std::env::temp_dir();
-            path.push(format!("mdseeker_args_test_{}_{}", name, std::process::id()));
+            path.push(format!(
+                "mdseeker_args_test_{}_{}",
+                name,
+                std::process::id()
+            ));
             let _ = fs::remove_dir_all(&path);
             fs::create_dir_all(&path).expect("Failed to create temp test directory");
             Self { path }
@@ -130,7 +131,13 @@ mod tests {
 
         let res = process_incoming_args(&args, &dir.path.to_string_lossy());
         assert_eq!(res.len(), 1);
-        assert_eq!(res[0], dunce::canonicalize(&valid_file).unwrap().to_string_lossy().to_string());
+        assert_eq!(
+            res[0],
+            dunce::canonicalize(&valid_file)
+                .unwrap()
+                .to_string_lossy()
+                .to_string()
+        );
     }
 
     #[test]
@@ -143,13 +150,23 @@ mod tests {
 
         let args = vec![
             file1.to_string_lossy().to_string(), // absolute
-            "doc2.markdown".to_string(),          // relative to cwd
+            "doc2.markdown".to_string(),         // relative to cwd
         ];
 
         let res = process_incoming_args(&args, &cwd);
         assert_eq!(res.len(), 2);
-        assert!(res.contains(&dunce::canonicalize(&file1).unwrap().to_string_lossy().to_string()));
-        assert!(res.contains(&dunce::canonicalize(&file2).unwrap().to_string_lossy().to_string()));
+        assert!(res.contains(
+            &dunce::canonicalize(&file1)
+                .unwrap()
+                .to_string_lossy()
+                .to_string()
+        ));
+        assert!(res.contains(
+            &dunce::canonicalize(&file2)
+                .unwrap()
+                .to_string_lossy()
+                .to_string()
+        ));
     }
 
     #[test]
@@ -161,13 +178,19 @@ mod tests {
 
         let args = vec![
             format!("\"{}\"", file.to_string_lossy()), // quoted absolute
-            "'My Notes 2026.md'".to_string(),           // quoted relative
+            "'My Notes 2026.md'".to_string(),          // quoted relative
         ];
 
         let res = process_incoming_args(&args, &cwd);
         // Both point to the exact same file -> deduplicated to 1
         assert_eq!(res.len(), 1);
-        assert_eq!(res[0], dunce::canonicalize(&file).unwrap().to_string_lossy().to_string());
+        assert_eq!(
+            res[0],
+            dunce::canonicalize(&file)
+                .unwrap()
+                .to_string_lossy()
+                .to_string()
+        );
     }
 
     #[test]
@@ -185,8 +208,18 @@ mod tests {
 
         let res = process_incoming_args(&args, &cwd);
         assert_eq!(res.len(), 2);
-        assert!(res.contains(&dunce::canonicalize(&file1).unwrap().to_string_lossy().to_string()));
-        assert!(res.contains(&dunce::canonicalize(&file2).unwrap().to_string_lossy().to_string()));
+        assert!(res.contains(
+            &dunce::canonicalize(&file1)
+                .unwrap()
+                .to_string_lossy()
+                .to_string()
+        ));
+        assert!(res.contains(
+            &dunce::canonicalize(&file2)
+                .unwrap()
+                .to_string_lossy()
+                .to_string()
+        ));
     }
 
     #[test]
@@ -208,7 +241,13 @@ mod tests {
 
         let res = process_incoming_args(&args, &cwd);
         assert_eq!(res.len(), 1);
-        assert_eq!(res[0], dunce::canonicalize(&valid).unwrap().to_string_lossy().to_string());
+        assert_eq!(
+            res[0],
+            dunce::canonicalize(&valid)
+                .unwrap()
+                .to_string_lossy()
+                .to_string()
+        );
     }
 
     #[test]

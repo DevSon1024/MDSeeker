@@ -7,13 +7,25 @@ pub fn select_theme<'a>(theme_set: &'a ThemeSet, theme_mode: Option<&str>) -> &'
             .themes
             .get("InspiredGitHub")
             .or_else(|| theme_set.themes.get("Solarized (light)"))
-            .unwrap_or_else(|| &theme_set.themes.values().next().expect("themes must not be empty")),
+            .unwrap_or_else(|| {
+                theme_set
+                    .themes
+                    .values()
+                    .next()
+                    .expect("themes must not be empty")
+            }),
         _ => theme_set
             .themes
             .get("base16-ocean.dark")
             .or_else(|| theme_set.themes.get("base16-eighties.dark"))
             .or_else(|| theme_set.themes.get("Solarized (dark)"))
-            .unwrap_or_else(|| &theme_set.themes.values().next().expect("themes must not be empty")),
+            .unwrap_or_else(|| {
+                theme_set
+                    .themes
+                    .values()
+                    .next()
+                    .expect("themes must not be empty")
+            }),
     }
 }
 

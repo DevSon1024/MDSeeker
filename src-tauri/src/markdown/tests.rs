@@ -64,7 +64,9 @@ fn test_parse_nested_inlines_bold_italic_strikethrough() {
 
         for node in content {
             match node {
-                InlineNode::Strong { content: strong_children } => {
+                InlineNode::Strong {
+                    content: strong_children,
+                } => {
                     for child in strong_children {
                         if let InlineNode::Emphasis { .. } = child {
                             found_strong_with_nested_emphasis = true;
@@ -77,7 +79,10 @@ fn test_parse_nested_inlines_bold_italic_strikethrough() {
             }
         }
 
-        assert!(found_strong_with_nested_emphasis, "nested bold/italic not preserved");
+        assert!(
+            found_strong_with_nested_emphasis,
+            "nested bold/italic not preserved"
+        );
         assert!(found_strikethrough, "strikethrough not found");
         assert!(found_code, "inline code not found");
     } else {
@@ -97,7 +102,11 @@ fn test_parse_links_and_images() {
 
         for node in content {
             match node {
-                InlineNode::Link { url, title, content } => {
+                InlineNode::Link {
+                    url,
+                    title,
+                    content,
+                } => {
                     assert_eq!(url, "https://devson.com");
                     assert_eq!(title.as_deref(), Some("Devson Title"));
                     assert_eq!(
@@ -127,7 +136,8 @@ fn test_parse_links_and_images() {
 
 #[test]
 fn test_parse_code_blocks_fenced_and_indented() {
-    let input = "```rust\nfn main() {\n    println!(\"Hello!\");\n}\n```\n\n    indented code block";
+    let input =
+        "```rust\nfn main() {\n    println!(\"Hello!\");\n}\n```\n\n    indented code block";
     let doc = parse_markdown(input, None).expect("failed to parse code blocks");
     assert_eq!(doc.blocks.len(), 2);
     assert!(doc.metadata.has_code_blocks);
@@ -184,7 +194,13 @@ fn test_parse_unordered_and_ordered_nested_lists() {
             let item2 = &items[1];
             let mut found_nested_ordered_list = false;
             for child in &item2.content {
-                if let BlockNode::List { is_ordered: true, start_number, items: sub_items, .. } = child {
+                if let BlockNode::List {
+                    is_ordered: true,
+                    start_number,
+                    items: sub_items,
+                    ..
+                } = child
+                {
                     assert_eq!(*start_number, Some(1));
                     assert_eq!(sub_items.len(), 2);
                     found_nested_ordered_list = true;
@@ -276,7 +292,8 @@ fn test_parse_thematic_break_and_html_inert() {
 
 #[test]
 fn test_parse_footnotes() {
-    let input = "Here is a statement with a footnote[^1].\n\n[^1]: This is the footnote definition.";
+    let input =
+        "Here is a statement with a footnote[^1].\n\n[^1]: This is the footnote definition.";
     let doc = parse_markdown(input, None).expect("failed to parse footnotes");
     assert_eq!(doc.blocks.len(), 2);
 
@@ -311,7 +328,10 @@ fn test_parse_yaml_frontmatter() {
     assert!(doc.metadata.frontmatter.is_some());
     let fm = doc.metadata.frontmatter.as_ref().unwrap();
     assert!(fm.contains("title: \"Custom Document Title\""));
-    assert_eq!(doc.metadata.title, Some("Custom Document Title".to_string()));
+    assert_eq!(
+        doc.metadata.title,
+        Some("Custom Document Title".to_string())
+    );
 
     // Frontmatter should NOT be in doc.blocks
     assert_eq!(doc.blocks.len(), 2);
@@ -357,7 +377,10 @@ fn test_parse_inline_and_block_math() {
     let input = "Einstein said $E = mc^2$ in relativity.\n\n$$\\int_0^1 x^2\\,dx = \\frac{1}{3}$$\n\nAnother equation.";
     let doc = parse_markdown(input, None).expect("failed to parse math markdown");
 
-    assert!(doc.metadata.has_math, "Document metadata should indicate hasMath is true");
+    assert!(
+        doc.metadata.has_math,
+        "Document metadata should indicate hasMath is true"
+    );
 
     // Block 0: Paragraph with inline math
     match &doc.blocks[0] {
@@ -366,7 +389,10 @@ fn test_parse_inline_and_block_math() {
                 InlineNode::InlineMath { math } => math == "E = mc^2",
                 _ => false,
             });
-            assert!(found_inline_math, "Should contain InlineMath node with 'E = mc^2'");
+            assert!(
+                found_inline_math,
+                "Should contain InlineMath node with 'E = mc^2'"
+            );
         }
         _ => panic!("Expected paragraph for block 0"),
     }

@@ -4,14 +4,26 @@ use super::*;
 fn test_exact_reconstruction_property() {
     let test_cases = vec![
         ("fn main() {\n    println!(\"Hello, world!\");\n}\n", "rust"),
-        ("def greet(name: str) -> str:\n    return f\"Hello {name}\"\n", "py"),
-        ("const add = (a: number, b: number): number => a + b;\n", "typescript"),
-        ("{\n  \"name\": \"mdseeker\",\n  \"version\": 1\n}\n", "json"),
+        (
+            "def greet(name: str) -> str:\n    return f\"Hello {name}\"\n",
+            "py",
+        ),
+        (
+            "const add = (a: number, b: number): number => a + b;\n",
+            "typescript",
+        ),
+        (
+            "{\n  \"name\": \"mdseeker\",\n  \"version\": 1\n}\n",
+            "json",
+        ),
         ("<div class=\"hero\"><p>Hello</p></div>\n", "html"),
         ("body { margin: 0; padding: 12px; }\n", "css"),
         ("select * from users where id = 1;\n", "sql"),
         ("echo \"Hello from shell script\"\nexit 0\n", "sh"),
-        ("unknown language block with strange content %^&*()", "nonexistent_lang"),
+        (
+            "unknown language block with strange content %^&*()",
+            "nonexistent_lang",
+        ),
         ("single line without newline", "rust"),
         ("\n\n\n", "rust"),
         ("", "rust"),
@@ -74,7 +86,10 @@ fn test_javascript_typescript_aliases() {
     // Mapped via alias to JavaScript engine
     assert_eq!(res_ts.language, "JavaScript");
     let has_color = res_ts.lines[0].tokens.iter().any(|t| t.color.is_some());
-    assert!(has_color, "TypeScript code mapped to JavaScript should have syntax colors");
+    assert!(
+        has_color,
+        "TypeScript code mapped to JavaScript should have syntax colors"
+    );
 }
 
 #[test]
