@@ -2,16 +2,23 @@ import { useEffect } from "react";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { useUIStore } from "@/stores/uiStore";
 import { useDocumentStore } from "@/stores/documentStore";
+import { useSettingsStore } from "@/stores/settingsStore";
+import { useRecentFilesStore } from "@/stores/recentFilesStore";
+import { loadSavedSession } from "@/services/settingsService";
 import { TitleBar } from "@/components/window/TitleBar";
 import { TabBar } from "@/components/tabs/TabBar";
 import { ReaderToolbar } from "@/components/toolbar/ReaderToolbar";
 import { OutlineSidebar } from "@/components/sidebar/OutlineSidebar";
 import { Workspace } from "@/components/workspace/Workspace";
 import { StatusBar } from "@/components/status/StatusBar";
+import { SettingsDialog } from "@/components/settings/SettingsDialog";
 import { initIncomingFileService } from "@/services/incomingFileService";
 
 export default function App() {
   const { initTheme, setViewMode, toggleSidebar, toggleSearch } = useUIStore();
+  const { initSettings, openSettings, closeSettings } = useSettingsStore();
+  const { initRecentFiles } = useRecentFilesStore();
+
   const {
     document,
     documents,
@@ -25,10 +32,74 @@ export default function App() {
     setIsDraggingOver,
   } = useDocumentStore();
 
+  // Initialize theme, settings, and recent files on mount
   useEffect(() => {
     initTheme();
+    initSettings();
+    initRecentFiles();
+  }, [initTheme, initSettings, initRecentFiles]);
 
-    // Keyboard Shortcuts Handler
+  // Session restoration on startup if enabled
+  useEffect(() => {
+    const { behavior } = useSettingsStore.getState().settings;
+    if (behavior.restoreLastSession) {
+      const session = loadSavedSession();
+      if (session && Array.isArray(session.openPaths) && session.openPaths.length > 0) {
+        if (useDocumentStore.getState().documents.length === 0) {
+          (async () => {
+            for (const path of session.openPaths) {
+              await loadDocumentByPath(path);
+            }
+            if (session.activePath) {
+              const matched = useDocumentStore.getState().findDocumentByPath(session.activePath);
+              if (matched) {
+                useDocumentStore.getState().setActiveDocument(matched.id);
+              }
+            }
+            if (session.viewMode) {
+              useUIStore.getState().setViewMode(session.viewMode);
+            }
+          })();
+        }
+      }
+    }
+  }, [loadDocumentByPath]);
+
+  // Window close confirmation when multiple tabs are open
+  useEffect(() => {
+    let unlistenClose: (() => void) | undefined;
+
+    async function setupCloseHandler() {
+      try {
+        const appWindow = getCurrentWindow();
+        unlistenClose = await appWindow.onCloseRequested((event) => {
+          const currentDocs = useDocumentStore.getState().documents;
+          const { behavior } = useSettingsStore.getState().settings;
+          if (behavior.confirmCloseWithMultipleTabs && currentDocs.length > 1) {
+            const confirmed = window.confirm(
+              `You have ${currentDocs.length} open tabs. Are you sure you want to close MDSeeker?`
+            );
+            if (!confirmed) {
+              event.preventDefault();
+            }
+          }
+        });
+      } catch {
+        // Outside Tauri desktop environment
+      }
+    }
+
+    setupCloseHandler();
+
+    return () => {
+      if (unlistenClose) {
+        unlistenClose();
+      }
+    };
+  }, []);
+
+  // Keyboard Shortcuts Handler
+  useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       // Do not intercept if user is typing inside an input or textarea
       if (
@@ -49,10 +120,28 @@ export default function App() {
             activatePreviousTab();
           } else if (key === "w") {
             e.preventDefault();
-            closeAllDocuments();
+            const { behavior } = useSettingsStore.getState().settings;
+            if (behavior.confirmCloseWithMultipleTabs && documents.length > 1) {
+              if (window.confirm("Are you sure you want to close all open tabs?")) {
+                closeAllDocuments();
+              }
+            } else {
+              closeAllDocuments();
+            }
           } else if (key === "o") {
             e.preventDefault();
             toggleSidebar();
+          }
+          return;
+        }
+
+        // Settings Shortcut: Ctrl+,
+        if (key === "," || e.code === "Comma") {
+          e.preventDefault();
+          if (useSettingsStore.getState().isSettingsOpen) {
+            closeSettings();
+          } else {
+            openSettings();
           }
           return;
         }
@@ -86,7 +175,6 @@ export default function App() {
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [
-    initTheme,
     setViewMode,
     toggleSidebar,
     toggleSearch,
@@ -96,6 +184,8 @@ export default function App() {
     activateNextTab,
     activatePreviousTab,
     activateTabByIndex,
+    openSettings,
+    closeSettings,
     document,
     documents.length,
   ]);
@@ -212,6 +302,9 @@ export default function App() {
 
       {/* 5. Status Bar */}
       <StatusBar />
+
+      {/* 6. Settings & Preferences Dialog */}
+      <SettingsDialog />
     </div>
   );
 }

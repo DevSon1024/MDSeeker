@@ -1,10 +1,12 @@
 import React, { useState, useRef, useEffect } from "react";
 import { Sun, Moon, Laptop, Check } from "lucide-react";
 import { useUIStore, AppTheme } from "@/stores/uiStore";
+import { useSettingsStore } from "@/stores/settingsStore";
 import { Tooltip } from "@/components/common/Tooltip";
 
 export function AppearanceMenu() {
   const { theme, setTheme } = useUIStore();
+  const updateAppearance = useSettingsStore((s) => s.updateAppearance);
   const [isOpen, setIsOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -78,6 +80,7 @@ export function AppearanceMenu() {
               role="menuitem"
               onClick={() => {
                 setTheme(t.value);
+                updateAppearance({ theme: t.value });
                 setIsOpen(false);
               }}
               className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-[var(--fluent-radius-sm)] text-[12px] transition-colors text-left ${

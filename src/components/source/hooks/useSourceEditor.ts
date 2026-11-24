@@ -1,9 +1,23 @@
 import { useEffect, useRef, useCallback } from "react";
 import { EditorState } from "@codemirror/state";
-import { EditorView } from "@codemirror/view";
+import {
+  EditorView,
+  lineNumbers,
+  highlightActiveLineGutter,
+  highlightActiveLine,
+} from "@codemirror/view";
 import { openSearchPanel, closeSearchPanel } from "@codemirror/search";
-import { createSourceEditorExtensions } from "../SourceEditorExtensions";
+import {
+  createSourceEditorExtensions,
+  lineNumbersCompartment,
+  highlightActiveLineCompartment,
+  lineWrappingCompartment,
+  tabSizeCompartment,
+  typographyCompartment,
+  getTypographyExtension,
+} from "../SourceEditorExtensions";
 import { getThemeExtension, themeCompartment } from "../SourceEditorTheme";
+import { useSettingsStore } from "@/stores/settingsStore";
 
 interface UseSourceEditorProps {
   containerRef: React.RefObject<HTMLDivElement | null>;
@@ -31,12 +45,15 @@ export function useSourceEditor({
   const onScrollRef = useRef(onScroll);
   onScrollRef.current = onScroll;
 
+  const sourceSettings = useSettingsStore((s) => s.settings.source);
+
   // Initialize CodeMirror instance once
   useEffect(() => {
     if (!containerRef.current) return;
 
     const extensions = createSourceEditorExtensions({
       isDark,
+      settings: sourceSettings,
       onScroll: (top, height, client) => {
         if (onScrollRef.current) {
           onScrollRef.current(top, height, client);
@@ -88,6 +105,36 @@ export function useSourceEditor({
       effects: themeCompartment.reconfigure(getThemeExtension(isDark)),
     });
   }, [isDark]);
+
+  // Update source settings dynamically using Compartments
+  useEffect(() => {
+    const view = viewRef.current;
+    if (!view) return;
+
+    view.dispatch({
+      effects: [
+        lineNumbersCompartment.reconfigure(
+          sourceSettings.showLineNumbers ? [lineNumbers(), highlightActiveLineGutter()] : []
+        ),
+        highlightActiveLineCompartment.reconfigure(
+          sourceSettings.highlightActiveLine ? highlightActiveLine() : []
+        ),
+        lineWrappingCompartment.reconfigure(
+          sourceSettings.wordWrap ? EditorView.lineWrapping : []
+        ),
+        tabSizeCompartment.reconfigure(
+          EditorState.tabSize.of(sourceSettings.tabSize)
+        ),
+        typographyCompartment.reconfigure(
+          getTypographyExtension(
+            sourceSettings.fontSize,
+            sourceSettings.lineHeight,
+            sourceSettings.fontFamily
+          )
+        ),
+      ],
+    });
+  }, [sourceSettings]);
 
   const openSearch = useCallback(() => {
     if (viewRef.current) {

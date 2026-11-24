@@ -10,8 +10,10 @@ import {
   MoreHorizontal,
   Info,
   Keyboard,
+  Settings as SettingsIcon,
 } from "lucide-react";
 import { useUIStore, ViewMode } from "@/stores/uiStore";
+import { useSettingsStore } from "@/stores/settingsStore";
 import { IconButton } from "@/components/common/IconButton";
 import { AppearanceMenu } from "./AppearanceMenu";
 import { Tooltip } from "@/components/common/Tooltip";
@@ -25,6 +27,8 @@ export function ReaderToolbar() {
     isSearchOpen,
     toggleSearch,
   } = useUIStore();
+
+  const openSettings = useSettingsStore((s) => s.openSettings);
 
   const [isMoreOpen, setIsMoreOpen] = useState(false);
   const moreRef = useRef<HTMLDivElement>(null);
@@ -116,7 +120,7 @@ export function ReaderToolbar() {
         })}
       </div>
 
-      {/* Right: Search, Appearance, More Actions */}
+      {/* Right: Search, Appearance, Settings, More Actions */}
       <div className="flex items-center gap-1">
         <IconButton
           icon={<Search className="w-4 h-4" />}
@@ -127,6 +131,13 @@ export function ReaderToolbar() {
         />
 
         <AppearanceMenu />
+
+        <IconButton
+          icon={<SettingsIcon className="w-4 h-4" />}
+          label="Settings"
+          tooltip="Settings (Ctrl+,)"
+          onClick={() => openSettings()}
+        />
 
         {/* More Actions Dropdown */}
         <div className="relative inline-block" ref={moreRef}>
@@ -152,6 +163,22 @@ export function ReaderToolbar() {
               <button
                 type="button"
                 role="menuitem"
+                onClick={() => {
+                  setIsMoreOpen(false);
+                  openSettings();
+                }}
+                className="w-full flex items-center justify-between px-2.5 py-1.5 rounded-[var(--fluent-radius-sm)] text-[12px] text-[var(--fluent-text-primary)] hover:bg-[var(--fluent-bg-subtle-hover)] text-left"
+              >
+                <div className="flex items-center gap-2">
+                  <SettingsIcon className="w-4 h-4 text-[var(--fluent-text-secondary)]" />
+                  <span>Settings</span>
+                </div>
+                <span className="text-[10px] text-[var(--fluent-text-tertiary)] font-mono">Ctrl+,</span>
+              </button>
+
+              <button
+                type="button"
+                role="menuitem"
                 onClick={() => setIsMoreOpen(false)}
                 className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-[var(--fluent-radius-sm)] text-[12px] text-[var(--fluent-text-primary)] hover:bg-[var(--fluent-bg-subtle-hover)] text-left"
               >
@@ -162,7 +189,10 @@ export function ReaderToolbar() {
               <button
                 type="button"
                 role="menuitem"
-                onClick={() => setIsMoreOpen(false)}
+                onClick={() => {
+                  setIsMoreOpen(false);
+                  openSettings("about");
+                }}
                 className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-[var(--fluent-radius-sm)] text-[12px] text-[var(--fluent-text-primary)] hover:bg-[var(--fluent-bg-subtle-hover)] text-left"
               >
                 <Info className="w-4 h-4 text-[var(--fluent-text-secondary)]" />

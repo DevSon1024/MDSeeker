@@ -2,6 +2,7 @@ import React, { useRef, useEffect, useCallback } from "react";
 import { MarkdownDocument } from "@/types/markdown";
 import { MarkdownContent } from "./MarkdownContent";
 import { useDocumentStore } from "@/stores/documentStore";
+import { useSettingsStore } from "@/stores/settingsStore";
 
 interface MarkdownReaderProps {
   document: MarkdownDocument;
@@ -20,6 +21,7 @@ export const MarkdownReader: React.FC<MarkdownReaderProps> = ({
   const activeDocumentId = useDocumentStore((s) => s.activeDocumentId);
   const getActiveDocument = useDocumentStore((s) => s.getActiveDocument);
   const updateDocumentScrollPosition = useDocumentStore((s) => s.updateDocumentScrollPosition);
+  const { reader } = useSettingsStore((s) => s.settings);
 
   // Restore scroll position when active document changes or on mount
   useEffect(() => {
@@ -35,15 +37,32 @@ export const MarkdownReader: React.FC<MarkdownReaderProps> = ({
     updateDocumentScrollPosition(activeDocumentId, "reader", containerRef.current.scrollTop);
   }, [activeDocumentId, updateDocumentScrollPosition]);
 
+  const widthClass =
+    {
+      narrow: "max-w-2xl",
+      medium: "max-w-4xl",
+      wide: "max-w-6xl",
+      full: "max-w-full",
+    }[reader.contentWidth] || "max-w-4xl";
+
   return (
     <div
       ref={containerRef}
       onScroll={handleScroll}
       role="region"
       aria-label="Markdown document content"
+      style={{
+        fontFamily: reader.fontFamily,
+        fontSize: `${reader.fontSize}px`,
+        lineHeight: reader.lineHeight,
+        scrollBehavior: reader.smoothScrolling ? "smooth" : "auto",
+        "--reader-paragraph-spacing": `${reader.paragraphSpacing}em`,
+        "--reader-font-size": `${reader.fontSize}px`,
+        "--reader-line-height": `${reader.lineHeight}`,
+      } as React.CSSProperties}
       className="flex-1 h-full overflow-y-auto bg-[var(--fluent-bg-window)] text-[var(--fluent-text-primary)] px-6 py-8 sm:px-12 sm:py-10"
     >
-      <div className="max-w-4xl mx-auto w-full">
+      <div className={`${widthClass} mx-auto w-full transition-all duration-150`}>
         <MarkdownContent document={document} docPath={canonicalPath} />
       </div>
     </div>

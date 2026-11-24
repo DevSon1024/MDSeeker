@@ -3,6 +3,10 @@ import { FileErrorResponse, LoadedDocument, OpenDocument } from "@/types/documen
 import { MarkdownDocument, ParseError } from "@/types/markdown";
 import { openMarkdownFileDialog, readMarkdownFile } from "@/services/documentService";
 import { parseMarkdown } from "@/services/markdownService";
+import { persistSession } from "@/services/settingsService";
+import { useSettingsStore } from "./settingsStore";
+import { useUIStore } from "./uiStore";
+import { useRecentFilesStore } from "./recentFilesStore";
 
 export interface DocumentState {
   // Multi-document collections
@@ -45,10 +49,31 @@ export function normalizePath(p: string): string {
   return p.replace(/\\/g, "/").toLowerCase();
 }
 
+function maybePersistSession(documents: OpenDocument[], activeDocId: string | null) {
+  try {
+    const { behavior } = useSettingsStore.getState().settings;
+    if (!behavior.restoreLastSession) return;
+    const paths = documents
+      .map((d) => d.canonicalPath)
+      .filter((p) => p && p.trim().length > 0);
+    const activeDoc = documents.find((d) => d.id === activeDocId);
+    persistSession({
+      version: 1,
+      openPaths: paths,
+      activePath: activeDoc?.canonicalPath || null,
+      viewMode: useUIStore.getState().viewMode,
+      timestamp: Date.now(),
+    });
+  } catch {
+    // Gracefully ignore storage failures
+  }
+}
+
 /**
  * Helper to compute synchronized active document state for backward compatibility.
  */
 function syncActiveState(documents: OpenDocument[], activeDocumentId: string | null) {
+  maybePersistSession(documents, activeDocumentId);
   const activeDoc = documents.find((d) => d.id === activeDocumentId) || null;
 
   if (!activeDoc) {
@@ -169,6 +194,9 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
       // Verify file wasn't closed while reading
       const currentDoc = get().documents.find((d) => d.id === docId);
       if (!currentDoc) return null;
+
+      // Record in recent files store
+      useRecentFilesStore.getState().addRecentFile(loaded.canonicalPath, loaded.fileName);
 
       // Check if canonical path matches another open document
       const canonicalNorm = normalizePath(loaded.canonicalPath);

@@ -7,7 +7,14 @@ export const ParagraphBlock: React.FC<{ node: ParagraphBlockType; docPath?: stri
   docPath,
 }) => {
   return (
-    <p className="text-[14px] leading-relaxed mb-4 text-[var(--fluent-text-primary)] last:mb-0">
+    <p
+      className="text-[var(--fluent-text-primary)] last:mb-0"
+      style={{
+        fontSize: "var(--reader-font-size, 15px)",
+        lineHeight: "var(--reader-line-height, 1.6)",
+        marginBottom: "var(--reader-paragraph-spacing, 1em)",
+      }}
+    >
       {node.content.map((child, idx) => (
         <MarkdownInline key={idx} node={child} docPath={docPath} />
       ))}

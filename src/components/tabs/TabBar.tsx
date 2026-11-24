@@ -4,6 +4,7 @@ import { DocumentTab, TabItem } from "./DocumentTab";
 import { TabContextMenu } from "./TabContextMenu";
 import { Tooltip } from "@/components/common/Tooltip";
 import { useDocumentStore } from "@/stores/documentStore";
+import { useSettingsStore } from "@/stores/settingsStore";
 
 export function TabBar() {
   const {
@@ -153,7 +154,16 @@ export function TabBar() {
           onCloseTab={(id) => closeDocument(id)}
           onCloseOtherTabs={(id) => closeOtherDocuments(id)}
           onCloseTabsToTheRight={(id) => closeTabsToTheRight(id)}
-          onCloseAllTabs={closeAllDocuments}
+          onCloseAllTabs={() => {
+            const { behavior } = useSettingsStore.getState().settings;
+            if (behavior.confirmCloseWithMultipleTabs && documents.length > 1) {
+              if (window.confirm("Are you sure you want to close all open tabs?")) {
+                closeAllDocuments();
+              }
+            } else {
+              closeAllDocuments();
+            }
+          }}
         />
       )}
     </>
