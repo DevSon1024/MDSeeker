@@ -29,7 +29,12 @@
   },
   "bundle": {
     "active": true,
-    "targets": "all",
+    "targets": ["nsis"],
+    "publisher": "Devson1024",
+    "copyright": "Copyright © 2026 Devson. All rights reserved.",
+    "category": "DeveloperTool",
+    "shortDescription": "Lightweight Windows-first Markdown Viewer",
+    "longDescription": "MDSeeker is a blazing-fast, Windows-first Markdown viewer featuring native Fluent design, syntax highlighting, Mermaid diagrams, KaTeX math rendering, and multi-document tab management.",
     "icon": [
       "icons/32x32.png",
       "icons/128x128.png",
@@ -37,6 +42,11 @@
       "icons/icon.icns",
       "icons/icon.ico"
     ],
+    "windows": {
+      "nsis": {
+        "installMode": "currentUser"
+      }
+    },
     "fileAssociations": [
       {
         "ext": ["md", "markdown"],
