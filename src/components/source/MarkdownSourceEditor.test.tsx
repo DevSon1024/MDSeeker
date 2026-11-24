@@ -109,20 +109,17 @@ describe("MarkdownSourceEditor Component", () => {
     expect(onToggleSync).toHaveBeenCalledTimes(1);
   });
 
-  it("triggers search panel on find button click", () => {
-    const { container } = render(
+  it("renders search bar when isSearchOpen is true", () => {
+    useUIStore.setState({ isSearchOpen: true });
+    render(
       <MarkdownSourceEditor
         content={sampleContent}
         fileName="find.md"
       />
     );
 
-    const findBtn = screen.getByRole("button", { name: "Find in source" });
-    expect(findBtn).toBeDefined();
-
-    fireEvent.click(findBtn);
-    // CodeMirror search panel inserts .cm-panels
-    const searchPanel = container.querySelector(".cm-panels");
-    expect(searchPanel).not.toBeNull();
+    const searchBar = screen.getByRole("search", { name: "Find in document" });
+    expect(searchBar).toBeDefined();
+    expect(screen.getByPlaceholderText("Find in document...")).toBeDefined();
   });
 });

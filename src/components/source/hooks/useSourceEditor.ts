@@ -27,6 +27,7 @@ interface UseSourceEditorProps {
 }
 
 export interface SourceEditorHandle {
+  getView: () => EditorView | null;
   openSearch: () => void;
   closeSearch: () => void;
   scrollToRatio: (ratio: number) => void;
@@ -188,6 +189,7 @@ export function useSourceEditor({
   }, []);
 
   return {
+    getView: () => viewRef.current,
     openSearch,
     closeSearch,
     scrollToRatio,

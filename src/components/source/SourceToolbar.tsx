@@ -1,12 +1,11 @@
 import { useState } from "react";
-import { FileCode, Lock, Search, Copy, Check, Link2, Unlink } from "lucide-react";
+import { FileCode, Lock, Copy, Check, Link2, Unlink } from "lucide-react";
 import { Tooltip } from "@/components/common/Tooltip";
 
 interface SourceToolbarProps {
   fileName?: string;
   lineCount: number;
   charCount: number;
-  onOpenFind?: () => void;
   rawContent: string;
   showSyncToggle?: boolean;
   isSyncEnabled?: boolean;
@@ -17,7 +16,6 @@ export function SourceToolbar({
   fileName,
   lineCount,
   charCount,
-  onOpenFind,
   rawContent,
   showSyncToggle,
   isSyncEnabled = true,
@@ -85,20 +83,6 @@ export function SourceToolbar({
               }`}
             >
               {isSyncEnabled ? <Link2 className="w-3.5 h-3.5" /> : <Unlink className="w-3.5 h-3.5" />}
-            </button>
-          </Tooltip>
-        )}
-
-        {/* Find Button */}
-        {onOpenFind && (
-          <Tooltip content="Find in source (Ctrl+F)" position="bottom">
-            <button
-              type="button"
-              onClick={onOpenFind}
-              aria-label="Find in source"
-              className="p-1 rounded-[var(--fluent-radius-sm)] text-[var(--fluent-text-secondary)] hover:text-[var(--fluent-text-primary)] hover:bg-[var(--fluent-bg-subtle-hover)] transition-colors"
-            >
-              <Search className="w-3.5 h-3.5" />
             </button>
           </Tooltip>
         )}
