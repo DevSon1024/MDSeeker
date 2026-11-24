@@ -1,6 +1,5 @@
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { WindowControls } from "./WindowControls";
-import { FileCode2 } from "lucide-react";
 import { useUIStore } from "@/stores/uiStore";
 import { useDocumentStore } from "@/stores/documentStore";
 
@@ -26,9 +25,11 @@ export function TitleBar() {
     >
       {/* Brand Identity / Left Section */}
       <div className="flex items-center gap-2 tauri-no-drag pointer-events-auto">
-        <div className="w-4 h-4 text-[var(--fluent-accent)] flex items-center justify-center">
-          <FileCode2 className="w-3.5 h-3.5" />
-        </div>
+        <img
+          src="/icon.svg"
+          alt="MDSeeker Logo"
+          className="w-4 h-4 object-contain rounded-xs select-none"
+        />
         <span className="text-[12px] font-medium tracking-tight text-[var(--fluent-text-secondary)]">
           MDSeeker
         </span>

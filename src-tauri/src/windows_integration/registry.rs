@@ -130,6 +130,14 @@ pub fn register_windows_default_app() -> Result<(), String> {
     let (dot_md, _) = classes
         .create_subkey(".md")
         .map_err(|e| format!("Failed to open .md class: {}", e))?;
+    let _ = dot_md.set_value("", &"MDSeeker.Document");
+    let (dot_md_icon, _) = dot_md
+        .create_subkey("DefaultIcon")
+        .map_err(|e| format!("Failed to create .md DefaultIcon: {}", e))?;
+    dot_md_icon
+        .set_value("", &format!("\"{}\",0", exe_path))
+        .map_err(|e| format!("Failed to set .md icon: {}", e))?;
+
     let (open_with_md, _) = dot_md
         .create_subkey("OpenWithProgids")
         .map_err(|e| format!("Failed to open .md OpenWithProgids: {}", e))?;
@@ -140,6 +148,14 @@ pub fn register_windows_default_app() -> Result<(), String> {
     let (dot_markdown, _) = classes
         .create_subkey(".markdown")
         .map_err(|e| format!("Failed to open .markdown class: {}", e))?;
+    let _ = dot_markdown.set_value("", &"MDSeeker.Document");
+    let (dot_markdown_icon, _) = dot_markdown
+        .create_subkey("DefaultIcon")
+        .map_err(|e| format!("Failed to create .markdown DefaultIcon: {}", e))?;
+    dot_markdown_icon
+        .set_value("", &format!("\"{}\",0", exe_path))
+        .map_err(|e| format!("Failed to set .markdown icon: {}", e))?;
+
     let (open_with_markdown, _) = dot_markdown
         .create_subkey("OpenWithProgids")
         .map_err(|e| format!("Failed to open .markdown OpenWithProgids: {}", e))?;
@@ -193,9 +209,9 @@ pub fn register_windows_default_app() -> Result<(), String> {
         .set_value("", &format!("\"{}\" \"%1\"", exe_path))
         .map_err(|e| format!("Failed to set Application command: {}", e))?;
 
-    // Notify Windows Shell that file associations have changed (SHCNE_ASSOCCHANGED = 0x08000000)
+    // Notify Windows Shell that file associations and icons have changed (SHCNE_ASSOCCHANGED = 0x08000000, SHCNF_FLUSH = 0x1000)
     unsafe {
-        SHChangeNotify(0x0800_0000, 0, std::ptr::null(), std::ptr::null());
+        SHChangeNotify(0x0800_0000, 0x1000, std::ptr::null(), std::ptr::null());
     }
 
     Ok(())

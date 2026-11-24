@@ -3,7 +3,7 @@ name = "mdseeker"
 version = "0.1.1"
 description = "MDSeeker - Lightweight Windows-first Markdown Viewer"
 authors = ["Devson1024"]
-edition = "2026"
+edition = "2021"
 
 [lib]
 name = "mdseeker_lib"

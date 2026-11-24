@@ -1,5 +1,5 @@
 import React from "react";
-import { FileCode, Layers, ShieldCheck, Heart } from "lucide-react";
+import { Layers, ShieldCheck, Heart } from "lucide-react";
 
 export const AboutSection: React.FC = () => {
   return (
@@ -15,14 +15,14 @@ export const AboutSection: React.FC = () => {
 
       {/* App Identity Banner */}
       <div className="p-5 rounded-[var(--fluent-radius-lg)] border border-[var(--fluent-border-card)] bg-[var(--fluent-bg-card)] shadow-xs flex items-center gap-4">
-        <div className="h-14 w-14 rounded-2xl bg-[var(--fluent-accent)] text-white flex items-center justify-center shadow-md flex-shrink-0 font-bold text-xl">
-          <FileCode className="w-8 h-8" />
+        <div className="h-14 w-14 rounded-2xl bg-white border border-[var(--fluent-border-card)] shadow-md flex items-center justify-center flex-shrink-0 p-2 overflow-hidden select-none">
+          <img src="/icon.svg" alt="MDSeeker Logo" className="w-full h-full object-contain" />
         </div>
         <div>
           <div className="flex items-center gap-2">
             <h3 className="text-lg font-bold text-[var(--fluent-text-primary)]">MDSeeker</h3>
             <span className="px-2 py-0.5 text-[10px] font-mono font-semibold rounded-full bg-[var(--fluent-accent-subtle)] text-[var(--fluent-accent)]">
-              v0.1.0
+              v0.1.1
             </span>
           </div>
           <p className="text-[12px] text-[var(--fluent-text-secondary)] mt-0.5">

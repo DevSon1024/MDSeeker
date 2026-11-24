@@ -1,6 +1,6 @@
 # MDSeeker
 
-[![Version](https://img.shields.io/badge/version-0.1.0-blue.svg)](https://github.com/devson/mdseeker)
+[![Version](https://img.shields.io/badge/version-0.1.1-blue.svg)](https://github.com/devson/mdseeker)
 [![Platform](https://img.shields.io/badge/platform-Windows%2010%20%7C%2011-0078d4.svg)](https://microsoft.com/windows)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
@@ -47,7 +47,7 @@
 ## Installation
 
 ### Installer (Recommended)
-1. Download the latest `MDSeeker_0.1.0_x64-setup.exe` from the [Releases](https://github.com/devson/mdseeker/releases) page.
+1. Download the latest `MDSeeker_0.1.1_x64-setup.exe` from the [Releases](https://github.com/devson/mdseeker/releases) page.
 2. Run the setup wizard. MDSeeker installs to your user profile (`%LOCALAPPDATA%\Programs\MDSeeker`) without requiring administrator privileges.
 3. Launch MDSeeker from your Start menu or desktop shortcut.
 

@@ -47,6 +47,25 @@ export default function App() {
     return () => window.removeEventListener("beforeunload", handleBeforeUnload);
   }, [initTheme, initSettings, initRecentFiles]);
 
+  // Reveal native window smoothly once React DOM is painted and theme initialized to eliminate white flash
+  useEffect(() => {
+    const frameId = requestAnimationFrame(async () => {
+      try {
+        const appWindow = getCurrentWindow();
+        if (appWindow && typeof appWindow.show === "function") {
+          await appWindow.show();
+        }
+        if (appWindow && typeof appWindow.setFocus === "function") {
+          await appWindow.setFocus();
+        }
+      } catch {
+        // Outside Tauri desktop environment
+      }
+    });
+
+    return () => cancelAnimationFrame(frameId);
+  }, []);
+
   // Window close confirmation when multiple tabs are open
   useEffect(() => {
     let unlistenClose: (() => void) | undefined;

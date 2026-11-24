@@ -1,0 +1,26 @@
+
+<svg xmlns="http://www.w3.org/2000/svg"
+     width="128" height="128"
+     viewBox="0 0 128 128">
+  <rect width="128" height="128" fill="#FFFFFF"/>
+
+  <g fill="none"
+     stroke="#111111"
+     stroke-width="5"
+     stroke-linecap="round"
+     stroke-linejoin="round">
+
+    <path d="M30 13 H77 L99 35 V111 H30 Z"/>
+    <path d="M77 13 V35 H99"/>
+
+    <!-- Markdown heading symbol -->
+    <path d="M43 57 H51"/>
+    <path d="M43 57 V72"/>
+    <path d="M51 57 V72"/>
+    <path d="M59 57 V72"/>
+
+    <!-- Document content -->
+    <path d="M43 86 H84"/>
+    <path d="M43 98 H73"/>
+  </g>
+</svg>

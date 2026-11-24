@@ -61,8 +61,18 @@ pub fn run() {
         }))
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_dialog::init())
-        .setup(|_app| {
+        .setup(|app| {
             windows_integration::ensure_windows_default_app_registered();
+
+            // Safety fallback: ensure window is revealed even if webview JS is interrupted
+            if let Some(window) = app.get_webview_window("main") {
+                let w = window.clone();
+                std::thread::spawn(move || {
+                    std::thread::sleep(std::time::Duration::from_millis(1500));
+                    let _ = w.show();
+                });
+            }
+
             Ok(())
         })
         .manage(queue)
